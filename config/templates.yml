@@ -1,0 +1,173 @@
+templates:
+  ElasticLoadBalancer: # AWS::ElasticLoadBalancing::LoadBalancer
+    HealthyHosts:
+      AlarmActions: crit
+      Namespace: AWS/ELB
+      MetricName: HealthyHostCount
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: LoadBalancerName
+      Statistic: Minimum
+      Threshold: 2
+      Threshold.development: 1
+      EvaluationPeriods: 1
+      TreatMissingData: notBreaching
+    UnHealthyHosts:
+      AlarmActions: warn
+      Namespace: AWS/ELB
+      MetricName: UnHealthyHostCount
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: LoadBalancerName
+      Statistic: Maximum
+      Threshold: 0
+      EvaluationPeriods: 10
+      TreatMissingData: notBreaching
+  ApplicationELBTargetGroup: # AWS::ElasticLoadBalancingV2::TargetGroup / AWS::ElasticLoadBalancingV2::LoadBalancer where type: application
+    HealthyHosts:
+      AlarmActions: crit
+      Namespace: AWS/ApplicationELB
+      MetricName: HealthyHostCount
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: TargetGroup/LoadBalancer
+      Statistic: Minimum
+      Threshold: 2
+      Threshold.development: 1
+      EvaluationPeriods: 1
+      TreatMissingData: breaching
+    UnHealthyHosts:
+      AlarmActions: warn
+      Namespace: AWS/ApplicationELB
+      MetricName: UnHealthyHostCount
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: TargetGroup/LoadBalancer
+      Statistic: Maximum
+      Threshold: 0
+      EvaluationPeriods: 10
+      TreatMissingData: notBreaching
+    TargetResponseTime:
+      AlarmActions: crit
+      Namespace: AWS/ApplicationELB
+      MetricName: TargetResponseTime
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: TargetGroup/LoadBalancer
+      Statistic: Average
+      Threshold: 5
+      EvaluationPeriods: 5
+      TreatMissingData: notBreaching
+  NetworkELBTargetGroup: # AWS::ElasticLoadBalancingV2::TargetGroup / AWS::ElasticLoadBalancingV2::LoadBalancer where type: network
+    HealthyHosts:
+      AlarmActions: crit
+      Namespace: AWS/NetworkELB
+      MetricName: HealthyHostCount
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: TargetGroup/LoadBalancer
+      Statistic: Minimum
+      Threshold: 2
+      Threshold.development: 1
+      EvaluationPeriods: 1
+      TreatMissingData: breaching
+    UnHealthyHosts:
+      AlarmActions: warn
+      Namespace: AWS/NetworkELB
+      MetricName: UnHealthyHostCount
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: TargetGroup/LoadBalancer
+      Statistic: Maximum
+      Threshold: 0
+      EvaluationPeriods: 10
+      TreatMissingData: notBreaching
+    TargetResponseTime:
+      AlarmActions: crit
+      Namespace: AWS/NetworkELB
+      MetricName: TargetResponseTime
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: TargetGroup/LoadBalancer
+      Statistic: Average
+      Threshold: 5
+      EvaluationPeriods: 5
+      TreatMissingData: notBreaching
+  AutoScalingGroup: # AWS::AutoScaling::AutoScalingGroup
+    CPUUtilizationHighBase:
+      AlarmActions: warn
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: AutoScalingGroupName
+      Statistic: Minimum
+      Threshold: 75
+      EvaluationPeriods: 60
+    StatusCheckFailed:
+      AlarmActions: warn
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: AutoScalingGroupName
+      Statistic: Maximum
+      Threshold: 0
+      EvaluationPeriods: 10
+  RDSInstance: # AWS::RDS::DBInstance
+    FreeStorageSpaceCrit:
+      AlarmActions: crit
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: DBInstanceIdentifier
+      Statistic: Minimum
+      Threshold: 50000000000
+      Threshold.development: 10000000000
+      EvaluationPeriods: 1
+    FreeStorageSpaceTask:
+      AlarmActions: task
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: DBInstanceIdentifier
+      Statistic: Minimum
+      Threshold: 100000000000
+      Threshold.development: 20000000000
+      EvaluationPeriods: 1
+    CPUUtilizationHighSpike:
+      AlarmActions: crit
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DBInstanceIdentifier
+      Statistic: Minimum
+      Threshold: 95
+      EvaluationPeriods: 10
+    CPUUtilizationHighBase:
+      AlarmActions: warn
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DBInstanceIdentifier
+      Statistic: Minimum
+      Threshold: 75
+      EvaluationPeriods: 60
+  ECSCluster: # AWS::ECS::Cluster
+    MemoryUtilizationWarn:
+      AlarmActions: warn
+      Namespace: AWS/ECS
+      MetricName: MemoryUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ClusterName
+      Statistic: Maximum
+      Threshold: 75
+      EvaluationPeriods: 10
+    MemoryUtilizationCrit:
+      AlarmActions: crit
+      Namespace: AWS/ECS
+      MetricName: MemoryUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ClusterName
+      Statistic: Maximum
+      Threshold: 95
+      EvaluationPeriods: 10
+    CPUUtilizationHighBase:
+      AlarmActions: warn
+      Namespace: AWS/ECS
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ClusterName
+      Statistic: Minimum
+      Threshold: 75
+      EvaluationPeriods: 10
