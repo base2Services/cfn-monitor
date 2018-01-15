@@ -4,6 +4,12 @@ CloudWatch Monitoring
 ## Configuration
 Create a symlink named "ciinaboxes" with a target of your base2-ciinabox repo (similar to ciinabox-jenkins)
 
+Example (with cloudwatch-monitoring and base2-ciinabox in the same directory):
+```bash
+cd cloudwatch-monitoring
+ln -s ../base2-ciinabox ciinaboxes
+```
+
 ## Usage
 ```bash
 rake cfn:generate [ciinabox-name]
