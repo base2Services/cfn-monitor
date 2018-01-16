@@ -20,7 +20,8 @@ All configuration takes place in the base2-ciinabox repo under the customer's ci
 Create a directory name "monitoring" (similar to the "jenkins" directory for ciinabox-jenkins), this directory will contain the "alarms.yml" file and optional "templates.yml" file.
 
 ### alarms.yml
-This file is used to configure the AWS resources you want to monitor with CloudWatch. Resources are referenced by the CloudFormation logical resource ID used to create them. Nested stacks are also referenced by their CloudFormation logical resource ID.
+
+This file is used to configure the AWS resources you want to monitor with CloudWatch.
 
 ```YAML
 source_bucket: [Name of S3 bucket where CloudFormation templates will be deployed]
@@ -38,6 +39,9 @@ resources:
   RDSStack.RDS: RDSInstance
 ```
 
+#### Resources
+Resources are referenced by the CloudFormation logical resource ID used to create them. Nested stacks are also referenced by their CloudFormation logical resource ID. See example above.
+
 #### Target group configuration:
 Target group alarms in CloudWatch require dimensions for both the target group and its associated load balancer.
 To configure a target group alarm provide the logical ID of the target group (including any stacks it's nested under) followed by "/", followed by the logical ID of the load balancer (also including any stacks it's nested under).
@@ -46,6 +50,16 @@ Example:
 ```YAML
 resources:
   LoadBalancerStack.WebDefTargetGroup/LoadBalancerStack.WebLoadBalancer: ApplicationELBTargetGroup
+```
+
+#### Custom Metrics
+Custom metrics are configured with a similar syntax to resources. Use `metrics` instead of `resources`.
+
+Example:
+
+```YAML
+metrics:
+  MyCustomMetric: MyCustomMetricTemplate
 ```
 
 #### Multiple templates
@@ -189,6 +203,63 @@ templates:
 The above example shows different `Threshold` values for `EnvironmentType` values of `production` (default), `development` or `staging`.
 Any value can be specified using the `.envType` syntax and the necessary mappings and `EnvironmentType` will be generated when rendered.
 The `EvaluationPeriods` value for `development` and `staging` type environments will be `5` in the above example as no `.envType` values where provided for this parameter.
+
+Supported Parameters:
+Parameter | Mapping support
+--- | ---
+ActionsEnabled | true
+AlarmActions | false
+AlarmDescription | false
+ComparisonOperator | true
+Dimensions | false
+EvaluateLowSampleCountPercentile | false
+EvaluationPeriods | true
+ExtendedStatistic | false
+InsufficientDataActions | false
+MetricName | true
+Namespace | true
+OKActions | false
+Period | true
+Statistic | true
+Threshold | true
+TreatMissingData | true
+Unit | false
+
+#### Template variables
+
+The following variables can be used in templates:
+
+Variable Key | Variable Value
+--- | ---
+${name} | Metric/Resource Name (from alarms.yml)
+${metric} | Metric Name (from alarms.yml)
+${resource} | Resource Name (from alarms.yml)
+${templateName} | Template Name (from templates.yml)
+${alarmName} | Alarm Name (from templates.yml)
+
+Example:
+
+`alarms.yml`
+```YAML
+metrics:
+  Metric1: MyCustomMetric
+```
+`templates.yml`
+```YAML
+templates:
+  MyCustomMetric:
+    ItemCountHigh:
+      MetricName: ${metric}
+      AlarmDescription: '#{templateName} #{alarmName} - #{name}'
+```
+Result:
+```YAML
+templates:
+  MyCustomMetric:
+    ItemCountHigh:
+      MetricName: Metric1
+      AlarmDescription: 'MyCustomMetric ItemCountHigh - Metric1'
+```
 
 #### Alarm Actions
 There are 3 classes of alarm actions: `crit`, `warn` and `task`.
