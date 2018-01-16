@@ -20,7 +20,8 @@ All configuration takes place in the base2-ciinabox repo under the customer's ci
 Create a directory name "monitoring" (similar to the "jenkins" directory for ciinabox-jenkins), this directory will contain the "alarms.yml" file and optional "templates.yml" file.
 
 ### alarms.yml
-This file is used to configure the AWS resources you want to monitor with CloudWatch. Resources are referenced by the CloudFormation logical resource ID used to create them. Nested stacks are also referenced by their CloudFormation logical resource ID.
+
+This file is used to configure the AWS resources you want to monitor with CloudWatch.
 
 ```YAML
 source_bucket: [Name of S3 bucket where CloudFormation templates will be deployed]
@@ -38,6 +39,9 @@ resources:
   RDSStack.RDS: RDSInstance
 ```
 
+#### Resources
+Resources are referenced by the CloudFormation logical resource ID used to create them. Nested stacks are also referenced by their CloudFormation logical resource ID. See example above.
+
 #### Target group configuration:
 Target group alarms in CloudWatch require dimensions for both the target group and its associated load balancer.
 To configure a target group alarm provide the logical ID of the target group (including any stacks it's nested under) followed by "/", followed by the logical ID of the load balancer (also including any stacks it's nested under).
@@ -46,6 +50,16 @@ Example:
 ```YAML
 resources:
   LoadBalancerStack.WebDefTargetGroup/LoadBalancerStack.WebLoadBalancer: ApplicationELBTargetGroup
+```
+
+#### Custom Metrics
+Custom metrics are configured with a similar syntax to resources. Use `metrics` instead of `resources`.
+
+Example:
+
+```YAML
+metrics:
+  MyCustomMetric: MyCustomMetricTemplate
 ```
 
 #### Multiple templates
