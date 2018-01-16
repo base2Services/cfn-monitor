@@ -21,130 +21,122 @@ CloudFormation do
   Parameter("EnvironmentType"){
     Type 'String'
   }
-
-  Condition('MonitoringDisabled', FnEquals(Ref("MonitoringDisabled"),'true'))
-
-  actionsEnabledMap = {
-    crit: Ref('SnsTopicCrit'),
-    warn: Ref('SnsTopicWarn'),
-    task: Ref('SnsTopicTask')
+  Parameter("EnvironmentName"){
+    Type 'String'
   }
 
-  mappings = {}
+  Condition('MonitoringDisabled', FnEquals(Ref("MonitoringDisabled"),'true'))
+  Condition('CritSNS', FnNot(FnEquals(Ref("SnsTopicCrit"),'')))
+  Condition('WarnSNS', FnNot(FnEquals(Ref("SnsTopicWarn"),'')))
+  Condition('TaskSNS', FnNot(FnEquals(Ref("SnsTopicTask"),'')))
+
+  actionsEnabledMap = {
+    crit: FnIf('CritSNS',[ Ref('SnsTopicCrit') ], [ ]),
+    warn: FnIf('WarnSNS',[ Ref('SnsTopicWarn') ], [ ]),
+    task: FnIf('TaskSNS',[ Ref('SnsTopicTask') ], [ ])
+  }
 
   alarms.each do |alarm|
     resourceGroup = alarm.keys[0]
     resources = resourceGroup.split('/')
-    template = alarm.values[0][0].tr('::', '')
-    name = alarm.values[0][1]
-    params = alarm.values[0][2]
+    type = (alarm.values[0][0])[0...-1]
+    template = alarm.values[0][1].tr('::', '')
+    name = alarm.values[0][2]
+    params = alarm.values[0][3]
     alarmHash = Digest::MD5.hexdigest "#{resourceGroup}#{template}#{name}"
-    dimensionsNames = params['DimensionsName'].split('/')
 
-    # Set defaults for optional properties
-    params['TreatMissingData'] ||= 'missing'
+    # Set defaults for optional parameters
+    params['TreatMissingData']  ||= 'missing'
+    params['AlarmDescription']  ||= FnJoin('', [ Ref('MonitoredStack'), " #{template} #{name} - #{resourceGroup}" ])
+    params['ActionsEnabled']    ||= true
+    params['Period']            ||= 60
 
-    # Create mappings
-    mappings["#{alarmHash}"] = {}
-    params.each do |key,value|
-      if !key.include? '.'
-        mappings["#{alarmHash}"][key] = {}
-        template_envs.each do |env|
-          if !params["#{key}.#{env}"].nil?
-            mappings["#{alarmHash}"][key][env] = params["#{key}.#{env}"]
-          else
-            mappings["#{alarmHash}"][key][env] = value
-          end
-        end
-      end
-    end
-    Mapping("#{alarmHash}", mappings["#{alarmHash}"])
-
-    # Set default property values
-    if !params['ActionsEnabled'].nil?
-      actionsEnabled = params['ActionsEnabled']
-    else
-      actionsEnabled = true
+    # Replace variables in parameters
+    params.each do |k,v|
+      replace_vars(params[k],'${name}',resourceGroup)
+      replace_vars(params[k],'${metric}',resourceGroup)
+      replace_vars(params[k],'${resource}',resourceGroup)
+      replace_vars(params[k],'${templateName}',template)
+      replace_vars(params[k],'${alarmName}',name)
     end
 
+    # Alarm action defaults
     if !params['AlarmActions'].nil?
-      alarmActions = [ actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ] ]
+      alarmActions = actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ]
     else
-      alarmActions = [ Ref('SnsTopicCrit') ]
+      alarmActions = actionsEnabledMap['crit']
     end
 
     if !params['InsufficientDataActions'].nil?
-      insufficientDataActions = [ actionsEnabledMap[ params['InsufficientDataActions'].downcase.to_sym ] ]
+      insufficientDataActions = actionsEnabledMap[ params['InsufficientDataActions'].downcase.to_sym ]
     elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task
       insufficientDataActions = []
     elsif !params['AlarmActions'].nil?
-      insufficientDataActions = [ actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ] ]
+      insufficientDataActions = actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ]
     else
-      insufficientDataActions = [ Ref('SnsTopicCrit') ]
+      insufficientDataActions = actionsEnabledMap['crit']
     end
 
     if !params['OKActions'].nil?
-      oKActions = [ actionsEnabledMap[ params['OKActions'].downcase.to_sym ] ]
+      oKActions = actionsEnabledMap[ params['OKActions'].downcase.to_sym ]
     elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task
       oKActions = []
     elsif !params['AlarmActions'].nil?
-      oKActions = [ actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ] ]
+      oKActions = actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ]
     else
-      oKActions = [ Ref('SnsTopicCrit') ]
+      oKActions = actionsEnabledMap['crit']
     end
 
-    # Configure physical resource inputs
-    conditions = []
-    dimensions = []
-    resources.each_with_index do |resource,index|
-      resourceHash =  Digest::MD5.hexdigest resource
-
-      # Create parameters for incoming physical resource IDs
-      Parameter("GetPhysicalId#{resourceHash}") do
-        Type 'String'
+    # Configure resource parameters
+    if type == 'resource'
+      # Configure physical resource inputs
+      dimensionsNames = params['DimensionsName'].split('/')
+      conditions, dimensions = [], []
+      resources.each_with_index do |resource,index|
+        resourceHash =  Digest::MD5.hexdigest resource
+        # Create parameters for incoming physical resource IDs
+        Parameter("GetPhysicalId#{resourceHash}") do
+          Type 'String'
+        end
+        # Transform physical resource IDs into dimension values if required
+        dimensionValue = Ref("GetPhysicalId#{resourceHash}")
+        dimensionValue = FnSelect('5',FnSplit(':',Ref("GetPhysicalId#{resourceHash}"))) if dimensionsNames[index] == 'TargetGroup'
+        dimensionValue = FnSelect('1',FnSplit('loadbalancer/',Ref("GetPhysicalId#{resourceHash}"))) if dimensionsNames[index] == 'LoadBalancer'
+        dimensionValue = FnJoin('', [Ref("GetPhysicalId#{resourceHash}"),'-001']) if dimensionsNames[index] == 'CacheClusterId'
+        # Prepare conditions based on physical resource ID values
+        conditions << FnNot(FnEquals(Ref("GetPhysicalId#{resourceHash}"),'null'))
+        dimensions << { Name: dimensionsNames[index], Value: dimensionValue }
       end
-
-      # Transform physical resource IDs into dimension values if required
-      dimensionValue = Ref("GetPhysicalId#{resourceHash}")
-
-      if dimensionsNames[index] == 'TargetGroup'
-        dimensionValue = FnSelect('5',FnSplit(':',Ref("GetPhysicalId#{resourceHash}")))
+      params['Dimensions'] = dimensions
+      # Create conditions
+      if conditions.length > 1
+        Condition("Condition#{alarmHash}", FnAnd(conditions))
+      else
+        Condition("Condition#{alarmHash}", conditions[0])
       end
-
-      if dimensionsNames[index] == 'LoadBalancer'
-        dimensionValue = FnSelect('1',FnSplit('loadbalancer/',Ref("GetPhysicalId#{resourceHash}")))
-      end
-
-      # Prepare conditions based on physical resource ID values
-      conditions << FnNot(FnEquals(Ref("GetPhysicalId#{resourceHash}"),'null'))
-      dimensions << { Name: dimensionsNames[index], Value: dimensionValue }
     end
 
-    # Create conditions
-    if conditions.length > 1
-      Condition("Condition#{alarmHash}", FnAnd(conditions))
-    else
-      Condition("Condition#{alarmHash}", conditions[0])
-    end
+    # Create parameter mappings
+    create_param_mappings(params,template_envs,alarmHash)
 
     # Create alarms
     Resource("Alarm#{alarmHash}") do
-      Condition "Condition#{alarmHash}"
+      Condition "Condition#{alarmHash}" if type == 'resource'
       Type('AWS::CloudWatch::Alarm')
-      Property('ActionsEnabled', FnIf('MonitoringDisabled', false, actionsEnabled))
+      Property('ActionsEnabled', FnIf('MonitoringDisabled', false, FnFindInMap("#{alarmHash}",'ActionsEnabled',Ref('EnvironmentType'))))
       Property('AlarmActions', alarmActions)
-      Property('AlarmDescription', FnJoin( '', [ Ref('MonitoredStack'), " #{template} #{name} Alarm" ] ))
-      Property('ComparisonOperator', params['ComparisonOperator'])
-      Property('Dimensions', dimensions)
+      Property('AlarmDescription', params['AlarmDescription'])
+      Property('ComparisonOperator', FnFindInMap("#{alarmHash}",'ComparisonOperator',Ref('EnvironmentType')))
+      Property('Dimensions', params['Dimensions'])
       Property('EvaluateLowSampleCountPercentile', params['EvaluateLowSampleCountPercentile']) unless params['EvaluateLowSampleCountPercentile'].nil?
       Property('EvaluationPeriods', FnFindInMap("#{alarmHash}",'EvaluationPeriods',Ref('EnvironmentType')))
       Property('ExtendedStatistic', params['ExtendedStatistic']) unless params['ExtendedStatistic'].nil?
       Property('InsufficientDataActions', insufficientDataActions)
-      Property('MetricName', params['MetricName'])
-      Property('Namespace', params['Namespace'])
+      Property('MetricName', FnFindInMap("#{alarmHash}",'MetricName',Ref('EnvironmentType')))
+      Property('Namespace', FnFindInMap("#{alarmHash}",'Namespace',Ref('EnvironmentType')))
       Property('OKActions', oKActions)
-      Property('Period', params['Period'] || 60)
-      Property('Statistic', params['Statistic'])
+      Property('Period', FnFindInMap("#{alarmHash}",'Period',Ref('EnvironmentType')))
+      Property('Statistic', FnFindInMap("#{alarmHash}",'Statistic',Ref('EnvironmentType')))
       Property('Threshold', FnFindInMap("#{alarmHash}",'Threshold',Ref('EnvironmentType')))
       Property('TreatMissingData',FnFindInMap("#{alarmHash}",'TreatMissingData',Ref('EnvironmentType')))
       Property('Unit', params['Unit']) unless params['Unit'].nil?

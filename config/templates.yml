@@ -171,3 +171,22 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 10
+  ElastiCacheReplicationGroup: # AWS::ElastiCache::ReplicationGroup
+    FreeableMemoryWarn:
+      AlarmActions: warn
+      Namespace: AWS/ElastiCache
+      MetricName: FreeableMemory
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: CacheClusterId
+      Statistic: Maximum
+      Threshold: 100000000
+      EvaluationPeriods: 10
+    CPUUtilizationHighBase:
+      AlarmActions: warn
+      Namespace: AWS/ElastiCache
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: CacheClusterId
+      Statistic: Minimum
+      Threshold: 75
+      EvaluationPeriods: 10
