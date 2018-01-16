@@ -225,6 +225,42 @@ Threshold | true
 TreatMissingData | true
 Unit | false
 
+#### Template variables
+
+The following variables can be used in templates:
+
+Variable Key | Variable Value
+--- | ---
+${name} | Metric/Resource Name (from alarms.yml)
+${metric} | Metric Name (from alarms.yml)
+${resource} | Resource Name (from alarms.yml)
+${templateName} | Template Name (from templates.yml)
+${alarmName} | Alarm Name (from templates.yml)
+
+Example:
+
+`alarms.yml`
+```YAML
+metrics:
+  Metric1: MyCustomMetric
+```
+`templates.yml`
+```YAML
+templates:
+  MyCustomMetric:
+    ItemCountHigh:
+      MetricName: ${metric}
+      AlarmDescription: '#{templateName} #{alarmName} - #{name}'
+```
+Result:
+```YAML
+templates:
+  MyCustomMetric:
+    ItemCountHigh:
+      MetricName: Metric1
+      AlarmDescription: 'MyCustomMetric ItemCountHigh - Metric1'
+```
+
 #### Alarm Actions
 There are 3 classes of alarm actions: `crit`, `warn` and `task`.
 
