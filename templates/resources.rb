@@ -24,26 +24,32 @@ CloudFormation do
   Parameter("GetPhysicalIdFunctionArn"){
     Type 'String'
   }
+  Parameter("EnvironmentName"){
+    Type 'String'
+  }
 
   Condition('MonitoringDisabled', FnEquals(Ref("MonitoringDisabled"),'true'))
 
   # Create CloudFormation Custom Resources
   customResources = []
   alarms.each do |alarm|
-    # Split resources for multi-dimension alarms
-    resources = alarm.keys[0].split('/')
-    resources.each_with_index do |resource,index|
-      resourceHash =  Digest::MD5.hexdigest resource
-      Resource("GetPhysicalId#{resourceHash}") do
-        Type 'Custom::GetResourcePhysicalId'
-        Property('ServiceToken', Ref('GetPhysicalIdFunctionArn'))
-        Property('StackName', Ref('MonitoredStack'))
-        Property('LogicalResourceId', FnJoin( '.', [ Ref('MonitoredStack'), resource ] ))
-        Property('Region', Ref('AWS::Region'))
+    type = (alarm.values[0][0])[0...-1]
+    if type == 'resource'
+      # Split resources for multi-dimension alarms
+      resources = alarm.keys[0].split('/')
+      resources.each_with_index do |resource,index|
+        resourceHash =  Digest::MD5.hexdigest resource
+        Resource("GetPhysicalId#{resourceHash}") do
+          Type 'Custom::GetResourcePhysicalId'
+          Property('ServiceToken', Ref('GetPhysicalIdFunctionArn'))
+          Property('StackName', Ref('MonitoredStack'))
+          Property('LogicalResourceId', FnJoin( '.', [ Ref('MonitoredStack'), resource ] ))
+          Property('Region', Ref('AWS::Region'))
+        end
+        customResources << "GetPhysicalId#{resourceHash}"
+        # Create outputs for user reference
+        Output("#{resource.delete('.')}") { Value(FnGetAtt("GetPhysicalId#{resourceHash}",'PhysicalResourceId')) }
       end
-      customResources << "GetPhysicalId#{resourceHash}"
-      # Create outputs for user reference
-      Output("#{resource.delete('.')}") { Value(FnGetAtt("GetPhysicalId#{resourceHash}",'PhysicalResourceId')) }
     end
   end
 
@@ -53,7 +59,8 @@ CloudFormation do
     SnsTopicWarn: Ref('SnsTopicWarn'),
     SnsTopicTask: Ref('SnsTopicTask'),
     MonitoringDisabled: Ref('MonitoringDisabled'),
-    EnvironmentType: Ref('EnvironmentType')
+    EnvironmentType: Ref('EnvironmentType'),
+    EnvironmentName: Ref('EnvironmentName')
   }
 
   # Add custom resources to nested stack params

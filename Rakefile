@@ -39,24 +39,31 @@ namespace :cfn do
   # Create an array of alarms based on the templates associated with each resource
   alarms = []
   resources = customer_alarms_config['resources']
+  metrics = customer_alarms_config['metrics']
+  rm = { resources: resources, metrics: metrics }
   source_bucket = customer_alarms_config['source_bucket']
-  resources.each do | resource,templatesEnabled |
-    # Convert strings to arrays for looping
-    if !templatesEnabled.kind_of?(Array) then templatesEnabled = templatesEnabled.split end
-    templatesEnabled.each do | templateEnabled |
-      if !templates['templates'][templateEnabled].nil?
-        # If a template is provided, inherit that template
-        if !templates['templates'][templateEnabled]['template'].nil?
-          template_from = Marshal.load( Marshal.dump(templates['templates'][templates['templates'][templateEnabled]['template']]) )
-          template_to = templates['templates'][templateEnabled].without('template')
-          template_merged = CommonHelper.deep_merge(template_from, template_to)
-          templates['templates'][templateEnabled] = template_merged
-        end
-        templates['templates'][templateEnabled].each do | alarm |
-          # Include template name as first element of the individual alarm array
-          alarm.insert(0,*[templateEnabled])
-          # Add alarm to alarms array with association to resource
-          alarms << { resource => alarm }
+
+  rm.each do | k,v |
+    if !v.nil?
+      v.each do | resource,templatesEnabled |
+        # Convert strings to arrays for looping
+        if !templatesEnabled.kind_of?(Array) then templatesEnabled = templatesEnabled.split end
+        templatesEnabled.each do | templateEnabled |
+          if !templates['templates'][templateEnabled].nil?
+            # If a template is provided, inherit that template
+            if !templates['templates'][templateEnabled]['template'].nil?
+              template_from = Marshal.load( Marshal.dump(templates['templates'][templates['templates'][templateEnabled]['template']]) )
+              template_to = templates['templates'][templateEnabled].without('template')
+              template_merged = CommonHelper.deep_merge(template_from, template_to)
+              templates['templates'][templateEnabled] = template_merged
+            end
+            templates['templates'][templateEnabled].each do | alarm |
+              # Include template name as first element of the individual alarm array
+              alarm.insert(0,k,*[templateEnabled])
+              # Add alarm to alarms array with association to resource
+              alarms << { resource => alarm }
+            end
+          end
         end
       end
     end
@@ -69,7 +76,7 @@ namespace :cfn do
     split[index/resource_limit] ||= {}
     split[index/resource_limit]['alarms'] ||= []
     split[index/resource_limit]['alarms'] << alarm
-    template_envs |= get_alarm_envs(alarm.values[0][2])
+    template_envs |= get_alarm_envs(alarm.values[0][3])
   end
 
   # Create temp files for split resources for CfnDsl input

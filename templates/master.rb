@@ -65,6 +65,23 @@ CloudFormation do
     Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
 
+  Resource("GetEnvironmentNameFunction") do
+    Type 'AWS::Lambda::Function'
+    Property('Code', { ZipFile: FnJoin("", IO.readlines("ext/lambda/getEnvironmentName.py").each { |line| "\"#{line}\"," }) })
+    Property('Handler', 'index.handler')
+    Property('MemorySize', 128)
+    Property('Runtime', 'python2.7')
+    Property('Timeout', 300)
+    Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
+  end
+
+  Resource("GetEnvironmentName") do
+    Type 'Custom::GetEnvironmentName'
+    Property('ServiceToken',FnGetAtt('GetEnvironmentNameFunction','Arn'))
+    Property('StackName', Ref('MonitoredStack'))
+    Property('Region', Ref('AWS::Region'))
+  end
+
   params = {
     MonitoredStack: Ref('MonitoredStack'),
     SnsTopicCrit: Ref('SnsTopicCrit'),
@@ -72,7 +89,8 @@ CloudFormation do
     SnsTopicTask: Ref('SnsTopicTask'),
     MonitoringDisabled: Ref('MonitoringDisabled'),
     EnvironmentType: Ref('EnvironmentType'),
-    GetPhysicalIdFunctionArn: FnGetAtt('GetPhysicalIdFunction','Arn')
+    GetPhysicalIdFunctionArn: FnGetAtt('GetPhysicalIdFunction','Arn'),
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
   }
 
   templateCount.times do |i|
