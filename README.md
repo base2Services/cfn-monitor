@@ -190,6 +190,27 @@ The above example shows different `Threshold` values for `EnvironmentType` value
 Any value can be specified using the `.envType` syntax and the necessary mappings and `EnvironmentType` will be generated when rendered.
 The `EvaluationPeriods` value for `development` and `staging` type environments will be `5` in the above example as no `.envType` values where provided for this parameter.
 
+Supported Parameters:
+Parameter | Mapping support
+--- | ---
+ActionsEnabled | true
+AlarmActions | false
+AlarmDescription | false
+ComparisonOperator | true
+Dimensions | false
+EvaluateLowSampleCountPercentile | false
+EvaluationPeriods | true
+ExtendedStatistic | false
+InsufficientDataActions | false
+MetricName | true
+Namespace | true
+OKActions | false
+Period | true
+Statistic | true
+Threshold | true
+TreatMissingData | true
+Unit | false
+
 #### Alarm Actions
 There are 3 classes of alarm actions: `crit`, `warn` and `task`.
 
