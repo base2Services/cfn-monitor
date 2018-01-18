@@ -1,0 +1,8 @@
+resource_limit: 50
+resource_defaults:
+  AWS::ElasticLoadBalancing::LoadBalancer: ElasticLoadBalancer
+  AWS::ElasticLoadBalancingV2::TargetGroup: ApplicationELBTargetGroup
+  AWS::AutoScaling::AutoScalingGroup: AutoScalingGroup
+  AWS::RDS::DBInstance: RDSInstance
+  AWS::ECS::Cluster: ECSCluster
+  AWS::ElastiCache::ReplicationGroup: ElastiCacheReplicationGroup
