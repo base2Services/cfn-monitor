@@ -7,92 +7,181 @@ require_relative 'ext/common_helper'
 require_relative 'ext/alarms'
 require 'fileutils'
 require 'digest'
+require 'aws-sdk'
 
 namespace :cfn do
 
-  resource_limit = 50 # Number of alarms per CloudFormation template
   ARGV.each { |a| task a.to_sym do ; end }
   customer = ARGV[1]
 
   # Global and customer config files
+  config_file = 'config/config.yml'
   global_templates_config_file = 'config/templates.yml'
   customer_templates_config_file = "ciinaboxes/#{customer}/monitoring/templates.yml"
   customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
 
-  # Load global and customer config files
+  # Load global config files
   global_templates_config = YAML.load(File.read(global_templates_config_file))
-  customer_alarms_config = YAML.load(File.read(customer_alarms_config_file))
+  config = YAML.load(File.read(config_file))
 
-  # Merge customer template configs over global template configs
-  if File.file?(customer_templates_config_file)
-    customer_templates_config = YAML.load(File.read(customer_templates_config_file))
-    templates = CommonHelper.deep_merge(global_templates_config, customer_templates_config)
-  else
-    templates = global_templates_config
-  end
+  desc('Generate CloudFormation for CloudWatch alarms')
+  task :generate do
+    # Load customer config files
+    customer_alarms_config = YAML.load(File.read(customer_alarms_config_file))
 
-  # Write templates config to temporary file for CfnDsl
-  templates_input_file = Tempfile.new(["templates-",'.yml'])
-  templates_input_file.write(templates.to_yaml)
-  templates_input_file.rewind
+    # Merge customer template configs over global template configs
+    if File.file?(customer_templates_config_file)
+      customer_templates_config = YAML.load(File.read(customer_templates_config_file))
+      templates = CommonHelper.deep_merge(global_templates_config, customer_templates_config)
+    else
+      templates = global_templates_config
+    end
 
-  # Create an array of alarms based on the templates associated with each resource
-  alarms = []
-  resources = customer_alarms_config['resources']
-  metrics = customer_alarms_config['metrics']
-  rm = { resources: resources, metrics: metrics }
-  source_bucket = customer_alarms_config['source_bucket']
+    # Write templates config to temporary file for CfnDsl
+    templates_input_file = Tempfile.new(["templates-",'.yml'])
+    templates_input_file.write(templates.to_yaml)
+    templates_input_file.rewind
 
-  rm.each do | k,v |
-    if !v.nil?
-      v.each do | resource,templatesEnabled |
-        # Convert strings to arrays for looping
-        if !templatesEnabled.kind_of?(Array) then templatesEnabled = templatesEnabled.split end
-        templatesEnabled.each do | templateEnabled |
-          if !templates['templates'][templateEnabled].nil?
-            # If a template is provided, inherit that template
-            if !templates['templates'][templateEnabled]['template'].nil?
-              template_from = Marshal.load( Marshal.dump(templates['templates'][templates['templates'][templateEnabled]['template']]) )
-              template_to = templates['templates'][templateEnabled].without('template')
-              template_merged = CommonHelper.deep_merge(template_from, template_to)
-              templates['templates'][templateEnabled] = template_merged
-            end
-            templates['templates'][templateEnabled].each do | alarm |
-              # Include template name as first element of the individual alarm array
-              alarm.insert(0,k,*[templateEnabled])
-              # Add alarm to alarms array with association to resource
-              alarms << { resource => alarm }
+    # Create an array of alarms based on the templates associated with each resource
+    alarms = []
+    resources = customer_alarms_config['resources']
+    metrics = customer_alarms_config['metrics']
+    rm = { resources: resources, metrics: metrics }
+    source_bucket = customer_alarms_config['source_bucket']
+
+    rm.each do | k,v |
+      if !v.nil?
+        v.each do | resource,templatesEnabled |
+          # Convert strings to arrays for looping
+          if !templatesEnabled.kind_of?(Array) then templatesEnabled = templatesEnabled.split end
+          templatesEnabled.each do | templateEnabled |
+            if !templates['templates'][templateEnabled].nil?
+              # If a template is provided, inherit that template
+              if !templates['templates'][templateEnabled]['template'].nil?
+                template_from = Marshal.load( Marshal.dump(templates['templates'][templates['templates'][templateEnabled]['template']]) )
+                template_to = templates['templates'][templateEnabled].without('template')
+                template_merged = CommonHelper.deep_merge(template_from, template_to)
+                templates['templates'][templateEnabled] = template_merged
+              end
+              templates['templates'][templateEnabled].each do | alarm |
+                # Include template name as first element of the individual alarm array
+                alarm.insert(0,k,*[templateEnabled])
+                # Add alarm to alarms array with association to resource
+                alarms << { resource => alarm }
+              end
             end
           end
         end
       end
     end
-  end
 
-  # Split resources for mulitple templates to avoid CloudFormation template resource limits
-  split = []
-  template_envs = ['production']
-  alarms.each_with_index do |alarm,index|
-    split[index/resource_limit] ||= {}
-    split[index/resource_limit]['alarms'] ||= []
-    split[index/resource_limit]['alarms'] << alarm
-    template_envs |= get_alarm_envs(alarm.values[0][3])
-  end
+    # Split resources for mulitple templates to avoid CloudFormation template resource limits
+    split = []
+    template_envs = ['production']
+    alarms.each_with_index do |alarm,index|
+      split[index/config['resource_limit']] ||= {}
+      split[index/config['resource_limit']]['alarms'] ||= []
+      split[index/config['resource_limit']]['alarms'] << alarm
+      template_envs |= get_alarm_envs(alarm.values[0][3])
+    end
 
-  # Create temp files for split resources for CfnDsl input
-  temp_files=[]
-  temp_file_paths=[]
-  (alarms.count/resource_limit.to_f).ceil.times do | i |
-    temp_files[i] = Tempfile.new(["alarms-#{i}-",'.yml'])
-    temp_file_paths << temp_files[i].path
-    temp_files[i].write(split[i].to_yaml)
-    temp_files[i].rewind
-  end
+    # Create temp files for split resources for CfnDsl input
+    temp_files=[]
+    temp_file_paths=[]
+    (alarms.count/config['resource_limit'].to_f).ceil.times do | i |
+      temp_files[i] = Tempfile.new(["alarms-#{i}-",'.yml'])
+      temp_file_paths << temp_files[i].path
+      temp_files[i].write(split[i].to_yaml)
+      temp_files[i].rewind
+    end
 
-  desc('Generate CloudWatch for alarms')
-  task :generate do
     ARGV.each { |a| task a.to_sym do ; end }
     write_cfdndsl_template(templates_input_file,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs)
+  end
+
+  desc('Query environment for monitorable resources')
+  task :query do
+    ARGV.each { |a| task a.to_sym do ; end }
+    customer = ARGV[1]
+    stack = ARGV[2]
+    region = ARGV[3]
+    if !customer || !stack || !region
+      puts "Usage:"
+      puts "rake cfn:query [customer] [stack] [region]"
+      exit 1
+    end
+
+    # Load customer config files
+    customer_alarms_config = YAML.load(File.read(customer_alarms_config_file))
+
+    puts "--------------------------------"
+    puts "stack: #{stack}"
+    puts "customer: #{customer}"
+    puts "region: #{region}"
+    puts "--------------------------------"
+    puts "Monitorable Resources"
+    puts "--------------------------------"
+
+    client = Aws::CloudFormation::Client.new(region: region)
+
+    def query_stacks (config,client,stack,stackResources={},location='')
+      stackResourceCount = 0
+      begin
+        resp = client.list_stack_resources({
+          stack_name: stack
+        })
+      rescue Aws::CloudFormation::Errors::ServiceError => e
+        puts "Error: #{e}"
+        exit 1
+      end
+
+      resp.stack_resource_summaries.each do | resource |
+        if resource['resource_type'] == 'AWS::CloudFormation::Stack'
+          query = query_stacks(config,client,resource['physical_resource_id'],stackResources,"#{location}.#{resource['logical_resource_id']}")
+          stackResourceCount += query[:stackResourceCount]
+        end
+        if config['resource_defaults'].key? resource['resource_type']
+          stackResource =  "#{location[1..-1]}.#{resource['logical_resource_id']}: #{config['resource_defaults'][resource['resource_type']]}"
+          puts stackResource
+          stackResources["#{location[1..-1]}.#{resource['logical_resource_id']}"] = "#{config['resource_defaults'][resource['resource_type']]}"
+          stackResourceCount += 1
+        end
+      end
+      stackResourceQuery = {
+        stackResourceCount: stackResourceCount,
+        stackResources: stackResources
+      }
+      sleep 0.5
+      stackResourceQuery
+    end
+
+    stackResourceQuery = query_stacks(config,client,stack)
+    stackResourceCount = stackResourceQuery[:stackResourceCount]
+    stackResources = stackResourceQuery[:stackResources]
+
+    configResourceCount = customer_alarms_config['resources'].keys.count
+    configResources = []
+
+    stackResources.each do | k,v |
+      if !customer_alarms_config['resources'].any? {|x, y| x.include? k}
+        configResources.push("#{k}: #{v}")
+      end
+    end
+
+    puts "--------------------------------"
+    puts "Monitorable resources in #{stack} stack: #{stackResourceCount}"
+    puts "Resources in #{customer} alarms config: #{configResourceCount}"
+    puts "Coverage: #{100-(configResources.count*100/stackResourceCount)}%"
+    puts "--------------------------------"
+    if configResourceCount < stackResourceCount
+      puts "Missing resources"
+      puts "--------------------------------"
+      configResources.each do | r |
+        puts r
+      end
+      puts "--------------------------------"
+    end
+
   end
 
   def write_cfdndsl_template(templates_input_file,configs,customer_alarms_config_file,customer,source_bucket,template_envs)
