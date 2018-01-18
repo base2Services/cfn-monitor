@@ -78,6 +78,22 @@ resources:
     - MyRDSInstance
 ```
 
+#### Auto generate alarms config for resources
+You can query an existing stack for monitorable resources using the `query` rake task. This will provide a list of resources in the correct config syntax, including the nested stacks and the default templates for those resources.
+
+Example:
+
+```bash
+elmer get-creds [customer] prod --format shell
+export AWS_ACCESS_KEY_ID=XXXXXXXXXXXX
+export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXX
+export AWS_SESSION_TOKEN=XXXXXXXXXXXX
+rake cfn:query [customer] [stack] [region]
+```
+
+Make sure you query a prod sized stack so that all conditional resources are included.
+The output will list all monitorable resources found in the stack, the coverage your current `alarms.yml` config provides, and a list of any resources missing from your current `alarms.yml` config.
+
 #### Templates
 The "template" value you specify for a resource refers to either a default template in the `config/templates.yml` file of this repo, or a custom/override template in the `monitoring/templates.yml` file of the customer's ciinabox monitoring directory. This template can contain multiple alarms. The example below shows the default `RDSInstance` template, which has 2 alarms (`FreeStorageSpaceCrit` and `FreeStorageSpaceTask`). Using the `RDSInstance` template in this example will create 2 CloudWatch alarms for the `RDS` resource in the `RDSStack` nested stack.
 
