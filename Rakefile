@@ -160,18 +160,24 @@ namespace :cfn do
     stackResources = stackResourceQuery[:stackResources]
 
     configResourceCount = customer_alarms_config['resources'].keys.count
+    configResources = []
+
+    stackResources.each do | k,v |
+      if !customer_alarms_config['resources'].any? {|x, y| x.include? k}
+        configResources.push("#{k}: #{v}")
+      end
+    end
+
     puts "--------------------------------"
     puts "Monitorable resources in #{stack} stack: #{stackResourceCount}"
     puts "Resources in #{customer} alarms config: #{configResourceCount}"
-    puts "Coverage: #{configResourceCount*100/stackResourceCount}%"
+    puts "Coverage: #{100-(configResources.count*100/stackResourceCount)}%"
     puts "--------------------------------"
     if configResourceCount < stackResourceCount
       puts "Missing resources"
       puts "--------------------------------"
-      stackResources.each do | k,v |
-        if !customer_alarms_config['resources'].any? {|x, y| x.include? k}
-          puts "#{k}: #{v}"
-        end
+      configResources.each do | r |
+        puts r
       end
       puts "--------------------------------"
     end
