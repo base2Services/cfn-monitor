@@ -47,7 +47,7 @@ CloudFormation do
 
     # Set defaults for optional parameters
     params['TreatMissingData']  ||= 'missing'
-    params['AlarmDescription']  ||= FnJoin('', [ Ref('MonitoredStack'), " #{template} #{name} - #{resourceGroup}" ])
+    params['AlarmDescription']  ||= FnJoin(' ', [ Ref('MonitoredStack'), "#{template}", "#{name}", FnSub(resourceGroup, env: Ref('EnvironmentName')) ])
     params['ActionsEnabled']    ||= true
     params['Period']            ||= 60
 
@@ -56,6 +56,7 @@ CloudFormation do
       replace_vars(params[k],'${name}',resourceGroup)
       replace_vars(params[k],'${metric}',resourceGroup)
       replace_vars(params[k],'${resource}',resourceGroup)
+      replace_vars(params[k],'${endpoint}',resourceGroup)
       replace_vars(params[k],'${templateName}',template)
       replace_vars(params[k],'${alarmName}',name)
     end
