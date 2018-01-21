@@ -26,7 +26,7 @@ CloudFormation do
     Default 'production'
   }
 
-  Resource("LambdaExecutionRole") do
+  Resource("CFLambdaExecutionRole") do
     Type 'AWS::IAM::Role'
     Property('AssumeRolePolicyDocument', {
       Version: '2012-10-17',
@@ -55,6 +55,35 @@ CloudFormation do
     ])
   end
 
+  Resource("HttpLambdaExecutionRole") do
+    Type 'AWS::IAM::Role'
+    Property('AssumeRolePolicyDocument', {
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Principal: { Service: [ 'lambda.amazonaws.com' ] },
+        Action: [ 'sts:AssumeRole' ]
+      }]
+    })
+    Property('Path','/')
+    Property('Policies', [
+      PolicyName: 'CloudFormationReadOnly',
+      PolicyDocument: {
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: [ 'logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents' ],
+          Resource: 'arn:aws:logs:*:*:*'
+        },
+        {
+          Effect: 'Allow',
+          Action: [ 'cloudwatch:PutMetricData' ],
+          Resource: '*'
+        }]
+      }
+    ])
+  end
+
   Resource("GetPhysicalIdFunction") do
     Type 'AWS::Lambda::Function'
     Property('Code', { ZipFile: FnJoin("", IO.readlines("ext/lambda/getPhysicalId.py").each { |line| "\"#{line}\"," }) })
@@ -62,7 +91,7 @@ CloudFormation do
     Property('MemorySize', 128)
     Property('Runtime', 'python2.7')
     Property('Timeout', 300)
-    Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
+    Property('Role', FnGetAtt('CFLambdaExecutionRole','Arn'))
   end
 
   Resource("GetEnvironmentNameFunction") do
@@ -72,7 +101,7 @@ CloudFormation do
     Property('MemorySize', 128)
     Property('Runtime', 'python2.7')
     Property('Timeout', 300)
-    Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
+    Property('Role', FnGetAtt('CFLambdaExecutionRole','Arn'))
   end
 
   Resource("GetEnvironmentName") do
@@ -80,6 +109,23 @@ CloudFormation do
     Property('ServiceToken',FnGetAtt('GetEnvironmentNameFunction','Arn'))
     Property('StackName', Ref('MonitoredStack'))
     Property('Region', Ref('AWS::Region'))
+  end
+
+  Resource("HttpCheckFunction") do
+    Type 'AWS::Lambda::Function'
+    Property('Code', { S3Bucket: FnJoin('.',[Ref('AWS::Region'),'aws-lambda-http-check']), S3Key: 'httpCheck.zip' })
+    Property('Handler', 'handler.http_check')
+    Property('MemorySize', 128)
+    Property('Runtime', 'python3.6')
+    Property('Timeout', 300)
+    Property('Role', FnGetAtt('HttpLambdaExecutionRole','Arn'))
+  end
+
+  Resource("HttpCheckPermissions") do
+    Type 'AWS::Lambda::Permission'
+    Property('FunctionName', Ref('HttpCheckFunction'))
+    Property('Action', 'lambda:InvokeFunction')
+    Property('Principal', 'events.amazonaws.com')
   end
 
   params = {
@@ -99,6 +145,22 @@ CloudFormation do
       Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/cloudformation/monitoring/resources#{i}.json")
       Property('TimeoutInMinutes', 5)
       Property('Parameters', params)
+    end
+  end
+
+  endpointParams = {
+    MonitoredStack: Ref('MonitoredStack'),
+    HttpCheckFunctionArn: FnGetAtt('HttpCheckFunction','Arn'),
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
+  }
+
+  endpoints ||= {}
+  if !endpoints.nil?
+    Resource("EndpointsStack") do
+      Type 'AWS::CloudFormation::Stack'
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/cloudformation/monitoring/endpoints.json")
+      Property('TimeoutInMinutes', 5)
+      Property('Parameters', endpointParams)
     end
   end
 
