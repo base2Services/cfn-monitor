@@ -1,4 +1,35 @@
 templates:
+  HttpCheck:
+    EndpointAvailable:
+      AlarmActions: crit
+      Namespace: HttpCheck
+      ComparisonOperator: LessThanThreshold
+      Dimensions: [ { Name: 'Endpoint', Value: { 'Fn::Sub': ['${endpoint}', {'env': { Ref: 'EnvironmentName' } } ] } } ]
+      Statistic: Maximum
+      Threshold: 1
+      Period: 60
+      EvaluationPeriods: 2
+      MetricName: Available
+    EndpointTimeTaken:
+      AlarmActions: crit
+      Namespace: HttpCheck
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'Endpoint', Value: { 'Fn::Sub': ['${endpoint}', {'env': { Ref: 'EnvironmentName' } } ] } } ]
+      Statistic: Minimum
+      Threshold: 1000
+      Period: 300
+      EvaluationPeriods: 1
+      MetricName: TimeTaken
+    EndpointStatusCodeMatch:
+      AlarmActions: crit
+      Namespace: HttpCheck
+      ComparisonOperator: LessThanThreshold
+      Dimensions: [ { Name: 'Endpoint', Value: { 'Fn::Sub': ['${endpoint}', {'env': { Ref: 'EnvironmentName' } } ] } } ]
+      Statistic: Maximum
+      Threshold: 1
+      Period: 60
+      EvaluationPeriods: 2
+      MetricName: StatusCodeMatch
   ElasticLoadBalancer: # AWS::ElasticLoadBalancing::LoadBalancer
     HealthyHosts:
       AlarmActions: crit

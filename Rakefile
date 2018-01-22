@@ -26,6 +26,13 @@ namespace :cfn do
 
   desc('Generate CloudFormation for CloudWatch alarms')
   task :generate do
+
+    if !customer
+      puts "Usage:"
+      puts "rake cfn:generate [customer]"
+      exit 1
+    end
+
     # Load customer config files
     customer_alarms_config = YAML.load(File.read(customer_alarms_config_file))
 
@@ -46,12 +53,15 @@ namespace :cfn do
     alarms = []
     resources = customer_alarms_config['resources']
     metrics = customer_alarms_config['metrics']
-    rm = { resources: resources, metrics: metrics }
+    endpoints = customer_alarms_config['endpoints']
+    endpoints ||= {}
+    rme = { resources: resources, metrics: metrics, endpoints: endpoints }
     source_bucket = customer_alarms_config['source_bucket']
 
-    rm.each do | k,v |
+    rme.each do | k,v |
       if !v.nil?
         v.each do | resource,templatesEnabled |
+          templatesEnabled = templatesEnabled['template'] if templatesEnabled.kind_of?(Hash)
           # Convert strings to arrays for looping
           if !templatesEnabled.kind_of?(Array) then templatesEnabled = templatesEnabled.split end
           templatesEnabled.each do | templateEnabled |
@@ -99,6 +109,39 @@ namespace :cfn do
     write_cfdndsl_template(templates_input_file,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs)
   end
 
+  desc('Deploy cloudformation templates to S3')
+  task :deploy do
+    ARGV.each { |a| task a.to_sym do ; end }
+    customer = ARGV[1]
+
+    if !customer
+      puts "Usage:"
+      puts "rake cfn:deploy [customer]"
+      exit 1
+    end
+
+    # Load customer config files
+    customer_alarms_config = YAML.load(File.read(customer_alarms_config_file)) if File.file?(customer_alarms_config_file)
+
+    puts "--------------------------------"
+    s3 = Aws::S3::Client.new(region: customer_alarms_config['source_region'])
+    ["output/#{customer}/*.json"].each { |path|
+      Dir.glob(path) do |file|
+        template = File.open(file, 'rb')
+        filename = file.gsub("output/#{customer}/", "")
+        s3.put_object({
+            body: template,
+            bucket: "#{customer_alarms_config['source_bucket']}",
+            key: "cloudformation/monitoring/#{filename}",
+        })
+        puts "INFO: Copied #{file} to s3://#{customer_alarms_config['source_bucket']}/cloudformation/monitoring/#{filename}"
+      end
+    }
+    puts "--------------------------------"
+    puts "Master stack: https://s3-#{customer_alarms_config['source_region']}.amazonaws.com/#{customer_alarms_config['source_bucket']}/cloudformation/monitoring/master.json"
+    puts "--------------------------------"
+  end
+
   desc('Query environment for monitorable resources')
   task :query do
     ARGV.each { |a| task a.to_sym do ; end }
@@ -112,7 +155,9 @@ namespace :cfn do
     end
 
     # Load customer config files
-    customer_alarms_config = YAML.load(File.read(customer_alarms_config_file))
+    customer_alarms_config = YAML.load(File.read(customer_alarms_config_file)) if File.file?(customer_alarms_config_file)
+    customer_alarms_config ||= {}
+    customer_alarms_config['resources'] ||= {}
 
     puts "--------------------------------"
     puts "stack: #{stack}"
@@ -192,6 +237,8 @@ namespace :cfn do
       File.open("output/#{customer}/alarms#{index}.json", 'w') { |file|
         file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/alarms.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     end
+    File.open("output/#{customer}/endpoints.json", 'w') { |file|
+      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/endpoints.rb",[[:yaml, customer_alarms_config_file],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     File.open("output/#{customer}/master.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
   end
