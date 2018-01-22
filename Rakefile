@@ -26,6 +26,13 @@ namespace :cfn do
 
   desc('Generate CloudFormation for CloudWatch alarms')
   task :generate do
+
+    if !customer
+      puts "Usage:"
+      puts "rake cfn:generate [customer]"
+      exit 1
+    end
+
     # Load customer config files
     customer_alarms_config = YAML.load(File.read(customer_alarms_config_file))
 
@@ -100,6 +107,39 @@ namespace :cfn do
 
     ARGV.each { |a| task a.to_sym do ; end }
     write_cfdndsl_template(templates_input_file,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs)
+  end
+
+  desc('Deploy cloudformation templates to S3')
+  task :deploy do
+    ARGV.each { |a| task a.to_sym do ; end }
+    customer = ARGV[1]
+
+    if !customer
+      puts "Usage:"
+      puts "rake cfn:deploy [customer]"
+      exit 1
+    end
+
+    # Load customer config files
+    customer_alarms_config = YAML.load(File.read(customer_alarms_config_file)) if File.file?(customer_alarms_config_file)
+
+    puts "--------------------------------"
+    s3 = Aws::S3::Client.new(region: customer_alarms_config['source_region'])
+    ["output/#{customer}/*.json"].each { |path|
+      Dir.glob(path) do |file|
+        template = File.open(file, 'rb')
+        filename = file.gsub("output/#{customer}/", "")
+        s3.put_object({
+            body: template,
+            bucket: "#{customer_alarms_config['source_bucket']}",
+            key: "cloudformation/monitoring/#{filename}",
+        })
+        puts "INFO: Copied #{file} to s3://#{customer_alarms_config['source_bucket']}/cloudformation/monitoring/#{filename}"
+      end
+    }
+    puts "--------------------------------"
+    puts "Master stack: https://s3-#{customer_alarms_config['source_region']}.amazonaws.com/#{customer_alarms_config['source_bucket']}/cloudformation/monitoring/master.json"
+    puts "--------------------------------"
   end
 
   desc('Query environment for monitorable resources')
