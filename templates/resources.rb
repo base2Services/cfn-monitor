@@ -33,10 +33,10 @@ CloudFormation do
   # Create CloudFormation Custom Resources
   customResources = []
   alarms.each do |alarm|
-    type = (alarm.values[0][0])[0...-1]
+    type = alarm[:type]
     if type == 'resource'
       # Split resources for multi-dimension alarms
-      resources = alarm.keys[0].split('/')
+      resources = alarm[:resource].split('/')
       resources.each_with_index do |resource,index|
         resourceHash =  Digest::MD5.hexdigest resource
         Resource("GetPhysicalId#{resourceHash}") do
