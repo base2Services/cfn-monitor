@@ -33,7 +33,7 @@ CloudFormation do
       ep = alarm[:parameters]
 
       # Set defaults
-      ep['ScheduleExpression'] ||= "* * * * ? *"
+      ep['scheduleExpression'] ||= "* * * * ? *"
 
       # Create payload
       payload = {}
@@ -46,7 +46,8 @@ CloudFormation do
       Resource("HttpCheckSchedule#{endpointHash}") do
         Condition "Condition#{endpointHash}" if alarm[:environments] != ['all']
         Type 'AWS::Events::Rule'
-        Property('ScheduleExpression', "cron(#{ep['ScheduleExpression']})")
+        Property('Description', FnSub( payload['ENDPOINT'], env: Ref('EnvironmentName') ) )
+        Property('ScheduleExpression', "cron(#{ep['scheduleExpression']})")
         Property('State', 'ENABLED')
         Property('Targets', [
           {
