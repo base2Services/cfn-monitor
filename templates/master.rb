@@ -155,7 +155,7 @@ CloudFormation do
   }
 
   endpoints ||= {}
-  if !endpoints.nil?
+  if !endpoints.empty?
     Resource("EndpointsStack") do
       Type 'AWS::CloudFormation::Stack'
       Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/cloudformation/monitoring/endpoints.json")
