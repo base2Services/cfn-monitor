@@ -1,5 +1,4 @@
 # cloudwatch-monitoring
-CloudWatch Monitoring
 
 ## Configuration
 Create a symlink named "ciinaboxes" with a target of your base2-ciinabox repo (similar to ciinabox-jenkins)
