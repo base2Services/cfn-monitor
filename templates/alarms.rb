@@ -37,12 +37,14 @@ CloudFormation do
   }
 
   alarms.each do |alarm|
-    resourceGroup = alarm.keys[0]
+
+    resourceGroup = alarm[:resource]
     resources = resourceGroup.split('/')
-    type = (alarm.values[0][0])[0...-1]
-    template = alarm.values[0][1].tr('::', '')
-    name = alarm.values[0][2]
-    params = alarm.values[0][3]
+    type = alarm[:type]
+    template = alarm[:template]
+    name = alarm[:alarm]
+    params = alarm[:parameters]
+
     alarmHash = Digest::MD5.hexdigest "#{resourceGroup}#{template}#{name}"
 
     # Set defaults for optional parameters
@@ -88,11 +90,13 @@ CloudFormation do
       oKActions = actionsEnabledMap['crit']
     end
 
+    conditions = []
+
     # Configure resource parameters
     if type == 'resource'
       # Configure physical resource inputs
       dimensionsNames = params['DimensionsName'].split('/')
-      conditions, dimensions = [], []
+      dimensions = []
       resources.each_with_index do |resource,index|
         resourceHash =  Digest::MD5.hexdigest resource
         # Create parameters for incoming physical resource IDs
@@ -109,12 +113,26 @@ CloudFormation do
         dimensions << { Name: dimensionsNames[index], Value: dimensionValue }
       end
       params['Dimensions'] = dimensions
-      # Create conditions
-      if conditions.length > 1
-        Condition("Condition#{alarmHash}", FnAnd(conditions))
-      else
-        Condition("Condition#{alarmHash}", conditions[0])
+    end
+
+    # Add environment conditions if needed
+    if alarm[:environments] != ['all']
+      envConditions = []
+      alarm[:environments].each do | env |
+        envConditions << FnEquals(Ref("EnvironmentName"),env)
       end
+      if envConditions.length > 1
+        conditions << FnOr(envConditions)
+      elsif envConditions.length == 1
+        conditions << envConditions[0]
+      end
+    end
+
+    # Create conditions
+    if conditions.length > 1
+      Condition("Condition#{alarmHash}", FnAnd(conditions))
+    elsif conditions.length == 1
+      Condition("Condition#{alarmHash}", conditions[0])
     end
 
     # Create parameter mappings
@@ -122,7 +140,7 @@ CloudFormation do
 
     # Create alarms
     Resource("Alarm#{alarmHash}") do
-      Condition "Condition#{alarmHash}" if type == 'resource'
+      Condition "Condition#{alarmHash}" if conditions.length > 0
       Type('AWS::CloudWatch::Alarm')
       Property('ActionsEnabled', FnIf('MonitoringDisabled', false, FnFindInMap("#{alarmHash}",'ActionsEnabled',Ref('EnvironmentType'))))
       Property('AlarmActions', alarmActions)

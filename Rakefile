@@ -44,11 +44,6 @@ namespace :cfn do
       templates = global_templates_config
     end
 
-    # Write templates config to temporary file for CfnDsl
-    templates_input_file = Tempfile.new(["templates-",'.yml'])
-    templates_input_file.write(templates.to_yaml)
-    templates_input_file.rewind
-
     # Create an array of alarms based on the templates associated with each resource
     alarms = []
     resources = customer_alarms_config['resources']
@@ -60,8 +55,22 @@ namespace :cfn do
 
     rme.each do | k,v |
       if !v.nil?
-        v.each do | resource,templatesEnabled |
-          templatesEnabled = templatesEnabled['template'] if templatesEnabled.kind_of?(Hash)
+        v.each do | resource,attributes |
+          # set environments to 'all' by default
+          environments = ['all']
+          # Support config hashs for additional parameters
+          params = {}
+          if attributes.kind_of?(Hash)
+            attributes.each do | a,b |
+              environments = b if a == 'environments'
+              # Convert strings to arrays for consistency
+              if !environments.kind_of?(Array) then environments = environments.split end
+              params[a] = b if !['template','environments'].member? a
+            end
+            templatesEnabled = attributes['template']
+          else
+            templatesEnabled = attributes
+          end
           # Convert strings to arrays for looping
           if !templatesEnabled.kind_of?(Array) then templatesEnabled = templatesEnabled.split end
           templatesEnabled.each do | templateEnabled |
@@ -73,17 +82,33 @@ namespace :cfn do
                 template_merged = CommonHelper.deep_merge(template_from, template_to)
                 templates['templates'][templateEnabled] = template_merged
               end
-              templates['templates'][templateEnabled].each do | alarm |
-                # Include template name as first element of the individual alarm array
-                alarm.insert(0,k,*[templateEnabled])
-                # Add alarm to alarms array with association to resource
-                alarms << { resource => alarm }
+              templates['templates'][templateEnabled].each do | alarm,parameters |
+                resourceParams = parameters.clone
+                # Override template params if overrides provided
+                params.each do | x,y |
+                  resourceParams[x] = y
+                end
+                # Construct alarm object
+                alarms << {
+                  resource: resource,
+                  type: k[0...-1],
+                  template: templateEnabled,
+                  alarm: alarm,
+                  parameters: resourceParams,
+                  environments: environments
+                }
               end
             end
           end
         end
       end
     end
+
+    # Create temp alarms file for CfnDsl
+    temp_file = Tempfile.new(["alarms-",'.yml'])
+    temp_file_path = temp_file.path
+    temp_file.write({'alarms' => alarms}.to_yaml)
+    temp_file.rewind
 
     # Split resources for mulitple templates to avoid CloudFormation template resource limits
     split = []
@@ -92,7 +117,7 @@ namespace :cfn do
       split[index/config['resource_limit']] ||= {}
       split[index/config['resource_limit']]['alarms'] ||= []
       split[index/config['resource_limit']]['alarms'] << alarm
-      template_envs |= get_alarm_envs(alarm.values[0][3])
+      template_envs |= get_alarm_envs(alarm[:parameters])
     end
 
     # Create temp files for split resources for CfnDsl input
@@ -100,13 +125,13 @@ namespace :cfn do
     temp_file_paths=[]
     (alarms.count/config['resource_limit'].to_f).ceil.times do | i |
       temp_files[i] = Tempfile.new(["alarms-#{i}-",'.yml'])
-      temp_file_paths << temp_files[i].path
+      temp_file_paths[i] = temp_files[i].path
       temp_files[i].write(split[i].to_yaml)
       temp_files[i].rewind
     end
 
     ARGV.each { |a| task a.to_sym do ; end }
-    write_cfdndsl_template(templates_input_file,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs)
+    write_cfdndsl_template(temp_file_path,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs)
   end
 
   desc('Deploy cloudformation templates to S3')
@@ -123,7 +148,7 @@ namespace :cfn do
     # Load customer config files
     customer_alarms_config = YAML.load(File.read(customer_alarms_config_file)) if File.file?(customer_alarms_config_file)
 
-    puts "--------------------------------"
+    puts "-----------------------------------------------"
     s3 = Aws::S3::Client.new(region: customer_alarms_config['source_region'])
     ["output/#{customer}/*.json"].each { |path|
       Dir.glob(path) do |file|
@@ -137,9 +162,9 @@ namespace :cfn do
         puts "INFO: Copied #{file} to s3://#{customer_alarms_config['source_bucket']}/cloudformation/monitoring/#{filename}"
       end
     }
-    puts "--------------------------------"
+    puts "-----------------------------------------------"
     puts "Master stack: https://s3-#{customer_alarms_config['source_region']}.amazonaws.com/#{customer_alarms_config['source_bucket']}/cloudformation/monitoring/master.json"
-    puts "--------------------------------"
+    puts "-----------------------------------------------"
   end
 
   desc('Query environment for monitorable resources')
@@ -159,20 +184,22 @@ namespace :cfn do
     customer_alarms_config ||= {}
     customer_alarms_config['resources'] ||= {}
 
-    puts "--------------------------------"
+    puts "-----------------------------------------------"
     puts "stack: #{stack}"
     puts "customer: #{customer}"
     puts "region: #{region}"
-    puts "--------------------------------"
-    puts "Monitorable Resources"
-    puts "--------------------------------"
+    puts "-----------------------------------------------"
+    puts "Searching Stacks for Monitorable Resources"
+    puts "-----------------------------------------------"
 
-    client = Aws::CloudFormation::Client.new(region: region)
+    cfClient = Aws::CloudFormation::Client.new(region: region)
+    elbClient = Aws::ElasticLoadBalancingV2::Client.new(region: region)
 
-    def query_stacks (config,client,stack,stackResources={},location='')
+    def query_stacks (config,cfClient,elbClient,stack,stackResources={template:{},physical_resource_id:{}},location='')
       stackResourceCount = 0
+      stackResourceCountLocal = 0
       begin
-        resp = client.list_stack_resources({
+        resp = cfClient.list_stack_resources({
           stack_name: stack
         })
       rescue Aws::CloudFormation::Errors::ServiceError => e
@@ -182,54 +209,86 @@ namespace :cfn do
 
       resp.stack_resource_summaries.each do | resource |
         if resource['resource_type'] == 'AWS::CloudFormation::Stack'
-          query = query_stacks(config,client,resource['physical_resource_id'],stackResources,"#{location}.#{resource['logical_resource_id']}")
+          query = query_stacks(config,cfClient,elbClient,resource['physical_resource_id'],stackResources,"#{location}.#{resource['logical_resource_id']}")
           stackResourceCount += query[:stackResourceCount]
         end
         if config['resource_defaults'].key? resource['resource_type']
-          stackResource =  "#{location[1..-1]}.#{resource['logical_resource_id']}: #{config['resource_defaults'][resource['resource_type']]}"
-          puts stackResource
-          stackResources["#{location[1..-1]}.#{resource['logical_resource_id']}"] = "#{config['resource_defaults'][resource['resource_type']]}"
+          if resource['resource_type'] == 'AWS::ElasticLoadBalancingV2::TargetGroup'
+            begin
+              tg = elbClient.describe_target_groups({
+                target_group_arns: [ resource['physical_resource_id'] ]
+              })
+            rescue Aws::ElasticLoadBalancingV2::Errors::ServiceError => e
+              puts "Error: #{e}"
+              exit 1
+            end
+            stackResources[:template]["#{location[1..-1]}.#{resource['logical_resource_id']}/#{tg['target_groups'][0]['load_balancer_arns'][0]}"] = config['resource_defaults'][resource['resource_type']]
+          else
+            stackResources[:template]["#{location[1..-1]}.#{resource['logical_resource_id']}"] = config['resource_defaults'][resource['resource_type']]
+          end
           stackResourceCount += 1
+          stackResourceCountLocal += 1
+          print "#{location[1..-1]}: Found #{stackResourceCount} resource#{"s" if stackResourceCount != 1}\r"
+          sleep 0.2
+        elsif resource['resource_type'] == 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+          stackResources[:physical_resource_id][resource['physical_resource_id']] = "#{location[1..-1]}.#{resource['logical_resource_id']}"
         end
       end
       stackResourceQuery = {
         stackResourceCount: stackResourceCount,
         stackResources: stackResources
       }
-      sleep 0.5
+      sleep 0.2
+      puts "#{stack if location == ''}#{location[1..-1]}: Found #{stackResourceCountLocal} resource#{"s" if stackResourceCountLocal != 1}"
       stackResourceQuery
     end
 
-    stackResourceQuery = query_stacks(config,client,stack)
+    stackResourceQuery = query_stacks(config,cfClient,elbClient,stack)
     stackResourceCount = stackResourceQuery[:stackResourceCount]
     stackResources = stackResourceQuery[:stackResources]
 
     configResourceCount = customer_alarms_config['resources'].keys.count
     configResources = []
+    keyUpdates = []
 
-    stackResources.each do | k,v |
+    stackResources[:template].each do | k,v |
+      if stackResources[:physical_resource_id].key? k.partition('/').last
+        keyUpdates << k
+      end
+    end
+
+    keyUpdates.each do | k |
+      stackResources[:template]["#{k.partition('/').first}/#{stackResources[:physical_resource_id][k.partition('/').last]}"] = stackResources[:template].delete(k)
+    end
+
+    stackResources[:template].each do | k,v |
       if !customer_alarms_config['resources'].any? {|x, y| x.include? k}
         configResources.push("#{k}: #{v}")
       end
     end
 
-    puts "--------------------------------"
-    puts "Monitorable resources in #{stack} stack: #{stackResourceCount}"
-    puts "Resources in #{customer} alarms config: #{configResourceCount}"
-    puts "Coverage: #{100-(configResources.count*100/stackResourceCount)}%"
-    puts "--------------------------------"
+    puts "-----------------------------------------------"
+    puts "Monitorable Resources (with default templates)"
+    puts "-----------------------------------------------"
+    stackResources[:template].each do | k,v |
+      puts "#{k}: #{v}"
+    end
+    puts "-----------------------------------------------"
     if configResourceCount < stackResourceCount
-      puts "Missing resources"
-      puts "--------------------------------"
+      puts "Missing resources (with default templates)"
+      puts "-----------------------------------------------"
       configResources.each do | r |
         puts r
       end
-      puts "--------------------------------"
+      puts "-----------------------------------------------"
     end
-
+    puts "Monitorable resources in #{stack} stack: #{stackResourceCount}"
+    puts "Resources in #{customer} alarms config: #{configResourceCount}"
+    puts "Coverage: #{100-(configResources.count*100/stackResourceCount)}%"
+    puts "-----------------------------------------------"
   end
 
-  def write_cfdndsl_template(templates_input_file,configs,customer_alarms_config_file,customer,source_bucket,template_envs)
+  def write_cfdndsl_template(alarms_config,configs,customer_alarms_config_file,customer,source_bucket,template_envs)
     FileUtils::mkdir_p "output/#{customer}"
     configs.each_with_index do |config,index|
       File.open("output/#{customer}/resources#{index}.json", 'w') { |file|
@@ -238,7 +297,7 @@ namespace :cfn do
         file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/alarms.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     end
     File.open("output/#{customer}/endpoints.json", 'w') { |file|
-      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/endpoints.rb",[[:yaml, customer_alarms_config_file],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
+      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/endpoints.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     File.open("output/#{customer}/master.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
   end
