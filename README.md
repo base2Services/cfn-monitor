@@ -1,5 +1,4 @@
 # cloudwatch-monitoring
-CloudWatch Monitoring
 
 ## Configuration
 Create a symlink named "ciinaboxes" with a target of your base2-ciinabox repo (similar to ciinabox-jenkins)
@@ -25,6 +24,7 @@ This file is used to configure the AWS resources you want to monitor with CloudW
 
 ```YAML
 source_bucket: [Name of S3 bucket where CloudFormation templates will be deployed]
+source_region: [Region of source_bucket]
 
 resources:
   [nested stack name].[resource name]: [template name]
