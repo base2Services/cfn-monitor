@@ -146,7 +146,12 @@ namespace :cfn do
     end
 
     # Load customer config files
-    customer_alarms_config = YAML.load(File.read(customer_alarms_config_file)) if File.file?(customer_alarms_config_file)
+    if File.file?(customer_alarms_config_file)
+      customer_alarms_config = YAML.load(File.read(customer_alarms_config_file)) if File.file?(customer_alarms_config_file)
+    else
+      puts "Failed to load ciinaboxes/#{customer}/monitoring/alarms.yml"
+      exit 1
+    end
 
     puts "-----------------------------------------------"
     s3 = Aws::S3::Client.new(region: customer_alarms_config['source_region'])
