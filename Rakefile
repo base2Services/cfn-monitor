@@ -88,9 +88,10 @@ namespace :cfn do
                 templates['templates'][templateEnabled] = template_merged
               end
               templates['templates'][templateEnabled].each do | alarm,parameters |
+                resourceParams = parameters.clone
                 # Override template params if overrides provided
                 params.each do | x,y |
-                  parameters[x] = y
+                  resourceParams[x] = y
                 end
                 # Construct alarm object
                 alarms << {
@@ -98,7 +99,7 @@ namespace :cfn do
                   type: k[0...-1],
                   template: templateEnabled,
                   alarm: alarm,
-                  parameters: parameters,
+                  parameters: resourceParams,
                   environments: environments
                 }
               end
