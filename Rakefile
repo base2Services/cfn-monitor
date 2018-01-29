@@ -44,11 +44,6 @@ namespace :cfn do
       templates = global_templates_config
     end
 
-    # # Write templates config to temporary file for CfnDsl
-    # templates_input_file = Tempfile.new(["templates-",'.yml'])
-    # templates_input_file.write(templates.to_yaml)
-    # templates_input_file.rewind
-
     # Create an array of alarms based on the templates associated with each resource
     alarms = []
     resources = customer_alarms_config['resources']
