@@ -27,6 +27,9 @@ CloudFormation do
   Parameter("EnvironmentName"){
     Type 'String'
   }
+  Parameter("ConfigToggle"){
+    Type 'String'
+  }
 
   Condition('MonitoringDisabled', FnEquals(Ref("MonitoringDisabled"),'true'))
 
@@ -45,6 +48,7 @@ CloudFormation do
           Property('StackName', Ref('MonitoredStack'))
           Property('LogicalResourceId', FnJoin( '.', [ Ref('MonitoredStack'), resource ] ))
           Property('Region', Ref('AWS::Region'))
+          Property('ConfigToggle', Ref('ConfigToggle'))
         end
         customResources << "GetPhysicalId#{resourceHash}"
         # Create outputs for user reference

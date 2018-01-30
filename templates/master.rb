@@ -25,6 +25,11 @@ CloudFormation do
     AllowedValues template_envs
     Default 'production'
   }
+  Parameter("ConfigToggle"){
+    Type 'String'
+    AllowedValues ['up','down']
+    Default 'up'
+  }
 
   Resource("CFLambdaExecutionRole") do
     Type 'AWS::IAM::Role'
@@ -109,6 +114,7 @@ CloudFormation do
     Property('ServiceToken',FnGetAtt('GetEnvironmentNameFunction','Arn'))
     Property('StackName', Ref('MonitoredStack'))
     Property('Region', Ref('AWS::Region'))
+    Property('ConfigToggle', Ref('ConfigToggle'))
   end
 
   Resource("HttpCheckFunction") do
@@ -136,7 +142,8 @@ CloudFormation do
     MonitoringDisabled: Ref('MonitoringDisabled'),
     EnvironmentType: Ref('EnvironmentType'),
     GetPhysicalIdFunctionArn: FnGetAtt('GetPhysicalIdFunction','Arn'),
-    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' ),
+    ConfigToggle: Ref('ConfigToggle')
   }
 
   templateCount.times do |i|
