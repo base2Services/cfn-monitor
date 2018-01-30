@@ -23,6 +23,7 @@ def getEnvironmentName(client,stackName):
     for r in response['Stacks'][0]['Parameters']:
         if r['ParameterKey'] == 'EnvironmentName':
             return r['ParameterValue']
+    return stackName
 
 
 def handler(event, context):
