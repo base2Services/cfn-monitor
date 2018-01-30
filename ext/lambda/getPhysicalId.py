@@ -8,7 +8,7 @@ def findNestedStack(client,resource):
     if len(resource) == 2:
         return resource
     else:
-        max_retries = 10
+        max_retries = 20
         sleep_time = 1
         for i in range(max_retries):
             try:
@@ -16,7 +16,7 @@ def findNestedStack(client,resource):
             except ClientError as e:
                 print e
                 time.sleep(sleep_time)
-                sleep_time += sleep_time
+                sleep_time += 1
                 continue
             else:
                 break
