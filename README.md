@@ -11,8 +11,13 @@ ln -s ../base2-ciinabox ciinaboxes
 
 ## Usage
 ```bash
-rake cfn:generate [ciinabox-name]
+rake cfn:generate <customer> [application]
 ```
+
+Parameter | Value
+--- | ---
+customer | The customer's ciinabox name (directory in base2-ciinabox repo)
+application | (Optional) For use when a customer has multiple applications
 
 ## Alarm configuration
 All configuration takes place in the base2-ciinabox repo under the customer's ciinabox directory.
@@ -109,8 +114,15 @@ Example:
 
 ```bash
 eval $(elmer get-creds [customer] prod --format shell)
-rake cfn:query [customer] [stack] [region]
+rake cfn:query <region> <stack> <customer> [application]
 ```
+
+Parameter | Value
+--- | ---
+region | The region of the stack you are querying (eg. ap-southeast-2)
+stack | The name of the stack you are querying (eg. prod)
+customer | The customer's ciinabox name (directory in base2-ciinabox repo)
+application | (Optional) For use when a customer has multiple applications
 
 Make sure you query a prod sized stack so that all conditional resources are included.
 The output will list all monitorable resources found in the stack, the coverage your current `alarms.yml` config provides, and a list of any resources missing from your current `alarms.yml` config.
@@ -315,8 +327,13 @@ The rendered CloudFormation templates should be deployed to `[source_bucket]/clo
 
 ```bash
 eval $(elmer get-creds [customer] ops --format shell)
-rake cfn:deploy [customer]
+rake cfn:deploy <customer> [application]
 ```
+
+Parameter | Value
+--- | ---
+customer | The customer's ciinabox name (directory in base2-ciinabox repo)
+application | (Optional) For use when a customer has multiple applications
 
 Launch the Monitoring stack in the desired account with the following CloudFormation parameters:
 

@@ -11,14 +11,9 @@ require 'aws-sdk'
 
 namespace :cfn do
 
-  ARGV.each { |a| task a.to_sym do ; end }
-  customer = ARGV[1]
-
   # Global and customer config files
   config_file = 'config/config.yml'
   global_templates_config_file = 'config/templates.yml'
-  customer_templates_config_file = "ciinaboxes/#{customer}/monitoring/templates.yml"
-  customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
 
   # Load global config files
   global_templates_config = YAML.load(File.read(global_templates_config_file))
@@ -27,14 +22,33 @@ namespace :cfn do
   desc('Generate CloudFormation for CloudWatch alarms')
   task :generate do
 
+    ARGV.each { |a| task a.to_sym do ; end }
+    customer = ARGV[1]
+    application = ARGV[2]
+
     if !customer
       puts "Usage:"
-      puts "rake cfn:generate [customer]"
+      puts "rake cfn:generate <customer> [application]"
       exit 1
     end
 
+    if application
+      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/alarms.yml"
+      customer_templates_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/templates.yml"
+      output_path = "output/#{customer}/#{application}"
+    else
+      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
+      customer_templates_config_file = "ciinaboxes/#{customer}/monitoring/templates.yml"
+      output_path = "output/#{customer}"
+    end
+
     # Load customer config files
-    customer_alarms_config = YAML.load(File.read(customer_alarms_config_file))
+    if File.file?(customer_alarms_config_file)
+      customer_alarms_config = YAML.load(File.read(customer_alarms_config_file))
+    else
+      puts "Failed to load #{customer_alarms_config_file}"
+      exit 1
+    end
 
     # Merge customer template configs over global template configs
     if File.file?(customer_templates_config_file)
@@ -131,40 +145,51 @@ namespace :cfn do
     end
 
     ARGV.each { |a| task a.to_sym do ; end }
-    write_cfdndsl_template(temp_file_path,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs)
+    write_cfdndsl_template(temp_file_path,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs,output_path)
   end
 
   desc('Deploy cloudformation templates to S3')
   task :deploy do
     ARGV.each { |a| task a.to_sym do ; end }
     customer = ARGV[1]
+    application = ARGV[2]
 
     if !customer
       puts "Usage:"
-      puts "rake cfn:deploy [customer]"
+      puts "rake cfn:deploy <customer> [application]"
       exit 1
+    end
+
+    if application
+      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/alarms.yml"
+      output_path = "output/#{customer}/#{application}"
+      upload_path = "cloudformation/monitoring/#{application}"
+    else
+      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
+      output_path = "output/#{customer}"
+      upload_path = "cloudformation/monitoring"
     end
 
     # Load customer config files
     if File.file?(customer_alarms_config_file)
       customer_alarms_config = YAML.load(File.read(customer_alarms_config_file)) if File.file?(customer_alarms_config_file)
     else
-      puts "Failed to load ciinaboxes/#{customer}/monitoring/alarms.yml"
+      puts "Failed to load #{customer_alarms_config_file}"
       exit 1
     end
 
     puts "-----------------------------------------------"
     s3 = Aws::S3::Client.new(region: customer_alarms_config['source_region'])
-    ["output/#{customer}/*.json"].each { |path|
+    ["#{output_path}/*.json"].each { |path|
       Dir.glob(path) do |file|
         template = File.open(file, 'rb')
-        filename = file.gsub("output/#{customer}/", "")
+        filename = file.gsub("#{output_path}/", "")
         s3.put_object({
             body: template,
             bucket: "#{customer_alarms_config['source_bucket']}",
-            key: "cloudformation/monitoring/#{filename}",
+            key: "#{upload_path}/#{filename}",
         })
-        puts "INFO: Copied #{file} to s3://#{customer_alarms_config['source_bucket']}/cloudformation/monitoring/#{filename}"
+        puts "INFO: Copied #{file} to s3://#{customer_alarms_config['source_bucket']}/#{upload_path}/#{filename}"
       end
     }
     puts "-----------------------------------------------"
@@ -175,13 +200,21 @@ namespace :cfn do
   desc('Query environment for monitorable resources')
   task :query do
     ARGV.each { |a| task a.to_sym do ; end }
-    customer = ARGV[1]
+    region = ARGV[1]
     stack = ARGV[2]
-    region = ARGV[3]
+    customer = ARGV[3]
+    application = ARGV[4]
+
     if !customer || !stack || !region
       puts "Usage:"
-      puts "rake cfn:query [customer] [stack] [region]"
+      puts "rake cfn:query <region> <stack> <customer> [application]"
       exit 1
+    end
+
+    if application
+      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/alarms.yml"
+    else
+      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
     end
 
     # Load customer config files
@@ -293,17 +326,17 @@ namespace :cfn do
     puts "-----------------------------------------------"
   end
 
-  def write_cfdndsl_template(alarms_config,configs,customer_alarms_config_file,customer,source_bucket,template_envs)
-    FileUtils::mkdir_p "output/#{customer}"
+  def write_cfdndsl_template(alarms_config,configs,customer_alarms_config_file,customer,source_bucket,template_envs,output_path)
+    FileUtils::mkdir_p output_path
     configs.each_with_index do |config,index|
-      File.open("output/#{customer}/resources#{index}.json", 'w') { |file|
+      File.open("#{output_path}/resources#{index}.json", 'w') { |file|
         file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/resources.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "source_bucket='#{source_bucket}'"]],STDOUT)))}
-      File.open("output/#{customer}/alarms#{index}.json", 'w') { |file|
+      File.open("#{output_path}/alarms#{index}.json", 'w') { |file|
         file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/alarms.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     end
-    File.open("output/#{customer}/endpoints.json", 'w') { |file|
+    File.open("#{output_path}/endpoints.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/endpoints.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
-    File.open("output/#{customer}/master.json", 'w') { |file|
+    File.open("#{output_path}/master.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
   end
 end
