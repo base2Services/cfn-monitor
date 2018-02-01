@@ -6,3 +6,4 @@ resource_defaults:
   AWS::RDS::DBInstance: RDSInstance
   AWS::ECS::Cluster: ECSCluster
   AWS::ElastiCache::ReplicationGroup: ElastiCacheReplicationGroup
+  AWS::EFS::FileSystem: ElasticFileSystem

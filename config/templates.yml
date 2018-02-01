@@ -232,3 +232,13 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 10
+  ElasticFileSystem: # AWS::EFS::FileSystem
+    PercentIOLimitHigh:
+      AlarmActions: crit
+      Namespace: AWS/EFS
+      MetricName: PercentIOLimit
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FileSystemId
+      Statistic: Minimum
+      Threshold: 90
+      EvaluationPeriods: 5
