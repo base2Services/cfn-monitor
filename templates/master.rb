@@ -149,7 +149,7 @@ CloudFormation do
   templateCount.times do |i|
     Resource("ResourcesStack#{i}") do
       Type 'AWS::CloudFormation::Stack'
-      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/cloudformation/monitoring/resources#{i}.json")
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/resources#{i}.json")
       Property('TimeoutInMinutes', 5)
       Property('Parameters', params)
     end
@@ -165,7 +165,7 @@ CloudFormation do
   if !endpoints.empty?
     Resource("EndpointsStack") do
       Type 'AWS::CloudFormation::Stack'
-      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/cloudformation/monitoring/endpoints.json")
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/endpoints.json")
       Property('TimeoutInMinutes', 5)
       Property('Parameters', endpointParams)
     end

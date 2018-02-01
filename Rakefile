@@ -36,10 +36,12 @@ namespace :cfn do
       customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/alarms.yml"
       customer_templates_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/templates.yml"
       output_path = "output/#{customer}/#{application}"
+      upload_path = "cloudformation/monitoring/#{application}"
     else
       customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
       customer_templates_config_file = "ciinaboxes/#{customer}/monitoring/templates.yml"
       output_path = "output/#{customer}"
+      upload_path = "cloudformation/monitoring"
     end
 
     # Load customer config files
@@ -145,7 +147,7 @@ namespace :cfn do
     end
 
     ARGV.each { |a| task a.to_sym do ; end }
-    write_cfdndsl_template(temp_file_path,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs,output_path)
+    write_cfdndsl_template(temp_file_path,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs,output_path,upload_path)
   end
 
   desc('Deploy cloudformation templates to S3')
@@ -326,17 +328,17 @@ namespace :cfn do
     puts "-----------------------------------------------"
   end
 
-  def write_cfdndsl_template(alarms_config,configs,customer_alarms_config_file,customer,source_bucket,template_envs,output_path)
+  def write_cfdndsl_template(alarms_config,configs,customer_alarms_config_file,customer,source_bucket,template_envs,output_path,upload_path)
     FileUtils::mkdir_p output_path
     configs.each_with_index do |config,index|
       File.open("#{output_path}/resources#{index}.json", 'w') { |file|
-        file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/resources.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "source_bucket='#{source_bucket}'"]],STDOUT)))}
+        file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/resources.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "source_bucket='#{source_bucket}'"],[:raw, "upload_path='#{upload_path}'"]],STDOUT)))}
       File.open("#{output_path}/alarms#{index}.json", 'w') { |file|
         file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/alarms.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     end
     File.open("#{output_path}/endpoints.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/endpoints.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     File.open("#{output_path}/master.json", 'w') { |file|
-      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
+      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"],[:raw, "upload_path='#{upload_path}'"]],STDOUT)))}
   end
 end

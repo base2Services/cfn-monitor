@@ -74,7 +74,7 @@ CloudFormation do
 
   Resource("AlarmsStack#{template_number}") do
     Type 'AWS::CloudFormation::Stack'
-    Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/cloudformation/monitoring/alarms#{template_number}.json")
+    Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/alarms#{template_number}.json")
     Property('TimeoutInMinutes', 5)
     Property('Parameters', params)
   end
