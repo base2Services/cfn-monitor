@@ -302,7 +302,7 @@ namespace :cfn do
     end
 
     stackResources[:template].each do | k,v |
-      if !customer_alarms_config['resources'].any? {|x, y| x.include? k}
+      if !customer_alarms_config['resources'].any? {|x, y| x == k}
         configResources.push("#{k}: #{v}")
       end
     end

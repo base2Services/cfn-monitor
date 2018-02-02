@@ -185,6 +185,27 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 60
+  DBCluster: # AWS::RDS::DBCluster
+    FreeStorageSpaceCrit:
+      AlarmActions: crit
+      Namespace: AWS/RDS
+      MetricName: FreeLocalStorage
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: DBClusterIdentifier
+      Statistic: Minimum
+      Threshold: 50000000000
+      Threshold.development: 10000000000
+      EvaluationPeriods: 1
+    FreeStorageSpaceTask:
+      AlarmActions: task
+      Namespace: AWS/RDS
+      MetricName: FreeLocalStorage
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: DBClusterIdentifier
+      Statistic: Minimum
+      Threshold: 100000000000
+      Threshold.development: 20000000000
+      EvaluationPeriods: 1
   ECSCluster: # AWS::ECS::Cluster
     MemoryUtilizationWarn:
       AlarmActions: warn
@@ -232,3 +253,13 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 10
+  ElasticFileSystem: # AWS::EFS::FileSystem
+    PercentIOLimitHigh:
+      AlarmActions: crit
+      Namespace: AWS/EFS
+      MetricName: PercentIOLimit
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FileSystemId
+      Statistic: Minimum
+      Threshold: 90
+      EvaluationPeriods: 5

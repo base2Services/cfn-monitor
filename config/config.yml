@@ -4,5 +4,7 @@ resource_defaults:
   AWS::ElasticLoadBalancingV2::TargetGroup: ApplicationELBTargetGroup
   AWS::AutoScaling::AutoScalingGroup: AutoScalingGroup
   AWS::RDS::DBInstance: RDSInstance
+  AWS::RDS::DBCluster: DBCluster
   AWS::ECS::Cluster: ECSCluster
   AWS::ElastiCache::ReplicationGroup: ElastiCacheReplicationGroup
+  AWS::EFS::FileSystem: ElasticFileSystem
