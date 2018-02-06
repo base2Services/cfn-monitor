@@ -1,6 +1,7 @@
 require 'cfndsl'
 
 CloudFormation do
+
   Description("CloudWatch Alarms Master")
 
   Parameter("MonitoredStack"){
@@ -170,5 +171,14 @@ CloudFormation do
       Property('Parameters', endpointParams)
     end
   end
+
+  last_commit_date = `git log -1 --date=short --pretty=format:%cd`
+  last_commit_hash = `git log -1 --pretty=format:"%H"`
+  render_date = Time.now.strftime("%Y-%m-%d")
+
+  Output("TemplateDate") { Value(last_commit_date) }
+  Output("TemplateHash") { Value(last_commit_hash) }
+  Output("RenderDate") { Value(render_date) }
+  Output("MonitoringDisabled") { Value(Ref("MonitoringDisabled")) }
 
 end
