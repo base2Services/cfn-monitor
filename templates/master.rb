@@ -179,6 +179,9 @@ CloudFormation do
   Output("TemplateDate") { Value(last_commit_date) }
   Output("TemplateHash") { Value(last_commit_hash) }
   Output("RenderDate") { Value(render_date) }
+  Output("MonitoredStack") { Value(Ref("MonitoredStack")) }
+  Output("StackName") { Value(Ref("AWS::StackName")) }
+  Output("Region") { Value(Ref("AWS::Region")) }
   Output("MonitoringDisabled") { Value(Ref("MonitoringDisabled")) }
 
 end
