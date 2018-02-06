@@ -41,6 +41,18 @@ templates:
       Period: 60
       EvaluationPeriods: 2
       MetricName: ResponseBodyRegexMatch
+  LambdaMetrics: # Lambda Functions deployed with a Function Name
+    Errors:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'FunctionName', Value: { 'Fn::Sub': ['${metric}', {'env': { Ref: 'EnvironmentName' } } ] } } ]
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: Errors
+      TreatMissingData: notBreaching
   ElasticLoadBalancer: # AWS::ElasticLoadBalancing::LoadBalancer
     HealthyHosts:
       AlarmActions: crit
