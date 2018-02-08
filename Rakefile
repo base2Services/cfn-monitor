@@ -195,7 +195,7 @@ namespace :cfn do
       end
     }
     puts "-----------------------------------------------"
-    puts "Master stack: https://s3-#{customer_alarms_config['source_region']}.amazonaws.com/#{customer_alarms_config['source_bucket']}/#{upload_path}/master.json"
+    puts "Master stack: https://s3.#{customer_alarms_config['source_region']}.amazonaws.com/#{customer_alarms_config['source_bucket']}/#{upload_path}/master.json"
     puts "-----------------------------------------------"
   end
 
