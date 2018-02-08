@@ -198,26 +198,24 @@ templates:
       Threshold: 75
       EvaluationPeriods: 60
   DBCluster: # AWS::RDS::DBCluster
-    FreeStorageSpaceCrit:
+    CPUUtilizationHighSpike:
       AlarmActions: crit
       Namespace: AWS/RDS
-      MetricName: FreeLocalStorage
-      ComparisonOperator: LessThanThreshold
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
       DimensionsName: DBClusterIdentifier
       Statistic: Minimum
-      Threshold: 50000000000
-      Threshold.development: 10000000000
-      EvaluationPeriods: 1
-    FreeStorageSpaceTask:
-      AlarmActions: task
+      Threshold: 95
+      EvaluationPeriods: 10
+    CPUUtilizationHighBase:
+      AlarmActions: warn
       Namespace: AWS/RDS
-      MetricName: FreeLocalStorage
-      ComparisonOperator: LessThanThreshold
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
       DimensionsName: DBClusterIdentifier
       Statistic: Minimum
-      Threshold: 100000000000
-      Threshold.development: 20000000000
-      EvaluationPeriods: 1
+      Threshold: 75
+      EvaluationPeriods: 60
   ECSCluster: # AWS::ECS::Cluster
     MemoryUtilizationWarn:
       AlarmActions: warn
