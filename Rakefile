@@ -324,7 +324,9 @@ namespace :cfn do
     end
     puts "Monitorable resources in #{stack} stack: #{stackResourceCount}"
     puts "Resources in #{customer} alarms config: #{configResourceCount}"
-    puts "Coverage: #{100-(configResources.count*100/stackResourceCount)}%"
+    if stackResourceCount > 0
+      puts "Coverage: #{100-(configResources.count*100/stackResourceCount)}%"
+    end
     puts "-----------------------------------------------"
   end
 
