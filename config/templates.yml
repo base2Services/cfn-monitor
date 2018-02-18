@@ -149,6 +149,7 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 60
+      TreatMissingData: notBreaching
     StatusCheckFailed:
       AlarmActions: warn
       Namespace: AWS/EC2
