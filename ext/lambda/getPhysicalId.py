@@ -21,7 +21,7 @@ def findNestedStack(client,resource):
             else:
                 break
         else:
-            return 1
+            return
         for r in response['StackResourceSummaries']:
             if r['ResourceType'] == 'AWS::CloudFormation::Stack':
                 if r['LogicalResourceId'] == resource[1]:
@@ -31,8 +31,8 @@ def findNestedStack(client,resource):
 
 def findResource(client,resource):
     time.sleep(5)
-    if resource != 1:
-        max_retries = 10
+    if resource:
+        max_retries = 20
         sleep_time = 1
         for i in range(max_retries):
             try:
@@ -40,17 +40,17 @@ def findResource(client,resource):
             except ClientError as e:
                 print e
                 time.sleep(sleep_time)
-                sleep_time += sleep_time
+                sleep_time += 1
                 continue
             else:
                 break
         else:
-            return "Error"
+            return
         for r in response['StackResourceSummaries']:
             if r['LogicalResourceId'] == resource[1]:
                 return r['PhysicalResourceId']
     else:
-        return "Error"
+        return
 
 def handler(event, context):
     resource = event['ResourceProperties']['LogicalResourceId'].split(".")
