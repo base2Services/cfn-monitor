@@ -159,6 +159,25 @@ templates:
       Statistic: Maximum
       Threshold: 0
       EvaluationPeriods: 10
+  Ec2Instance: # AWS::EC2::Instance
+    CPUUtilizationHigh:
+      AlarmActions: crit
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: InstanceId
+      Statistic: Minimum
+      Threshold: 90
+      EvaluationPeriods: 10
+    StatusCheckFailed:
+      AlarmActions: crit
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: InstanceId
+      Statistic: Maximum
+      Threshold: 0
+      EvaluationPeriods: 10
   RDSInstance: # AWS::RDS::DBInstance
     FreeStorageSpaceCrit:
       AlarmActions: crit

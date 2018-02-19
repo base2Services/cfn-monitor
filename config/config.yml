@@ -8,3 +8,4 @@ resource_defaults:
   AWS::ECS::Cluster: ECSCluster
   AWS::ElastiCache::ReplicationGroup: ElastiCacheReplicationGroup
   AWS::EFS::FileSystem: ElasticFileSystem
+  AWS::EC2::Instance: Ec2Instance
