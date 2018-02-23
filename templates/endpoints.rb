@@ -42,6 +42,10 @@ CloudFormation do
       payload['ENDPOINT'] = alarm[:resource]
       payload['BODY_REGEX_MATCH'] = ep['bodyRegex'] if !ep['bodyRegex'].nil?
       payload['HEADERS'] = ep['headers'] if !ep['headers'].nil?
+      if ep['payload']
+        payload['METHOD'] = ep['method'] || "GET"
+        payload['PAYLOAD'] = ep['payload'] || !ep['payload'].nil?
+      end
 
       endpointHash =  Digest::MD5.hexdigest alarm[:resource]
       Resource("HttpCheckSchedule#{endpointHash}") do
