@@ -80,6 +80,16 @@ endpoints:
     bodyRegex: 'DevOps'
 ```
 
+```YAML
+endpoints:
+  http://www.base2services.com:
+    template: HttpCheck
+    statusCode: 200
+    bodyRegex: 'DevOps'
+    payload: id_=123
+    method: POST
+```
+
 Supported parameters:
 
 Key | Value | Default
