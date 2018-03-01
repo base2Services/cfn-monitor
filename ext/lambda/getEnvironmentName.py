@@ -6,7 +6,7 @@ import time
 
 def getEnvironmentName(client,stackName):
     time.sleep(5)
-    max_retries = 10
+    max_retries = 5
     sleep_time = 1
     for i in range(max_retries):
         try:
@@ -19,11 +19,14 @@ def getEnvironmentName(client,stackName):
         else:
             break
     else:
-        return "Error"
-    for r in response['Stacks'][0]['Parameters']:
-        if r['ParameterKey'] == 'EnvironmentName':
-            return r['ParameterValue']
-    return stackName
+        return stackName
+    if 'Parameters' in response['Stacks'][0]:
+        for r in response['Stacks'][0]['Parameters']:
+            if r['ParameterKey'] == 'EnvironmentName':
+                return r['ParameterValue']
+        return stackName
+    else:
+        return stackName
 
 
 def handler(event, context):
