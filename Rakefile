@@ -64,9 +64,11 @@ namespace :cfn do
     alarms = []
     resources = customer_alarms_config['resources']
     metrics = customer_alarms_config['metrics']
+    hosts = customer_alarms_config['hosts']
+    hosts ||= {}
     endpoints = customer_alarms_config['endpoints']
     endpoints ||= {}
-    rme = { resources: resources, metrics: metrics, endpoints: endpoints }
+    rme = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts }
     source_bucket = customer_alarms_config['source_bucket']
 
     rme.each do | k,v |
@@ -104,15 +106,31 @@ namespace :cfn do
                 params.each do | x,y |
                   resourceParams[x] = y
                 end
-                # Construct alarm object
-                alarms << {
-                  resource: resource,
-                  type: k[0...-1],
-                  template: templateEnabled,
-                  alarm: alarm,
-                  parameters: resourceParams,
-                  environments: environments
-                }
+                if k == :hosts
+                  resourceParams['cmds'].each do |cmd|
+                    hostParams = resourceParams.clone
+                    hostParams['cmd'] = cmd
+                    # Construct alarm object per cmd
+                    alarms << {
+                      resource: resource,
+                      type: k[0...-1],
+                      template: templateEnabled,
+                      alarm: alarm,
+                      parameters: hostParams,
+                      environments: environments
+                    }
+                  end
+                else
+                  # Construct alarm object
+                  alarms << {
+                    resource: resource,
+                    type: k[0...-1],
+                    template: templateEnabled,
+                    alarm: alarm,
+                    parameters: resourceParams,
+                    environments: environments
+                  }
+                end
               end
             end
           end
@@ -340,6 +358,8 @@ namespace :cfn do
     end
     File.open("#{output_path}/endpoints.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/endpoints.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
+    File.open("#{output_path}/hosts.json", 'w') { |file|
+      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/hosts.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     File.open("#{output_path}/master.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"],[:raw, "upload_path='#{upload_path}'"]],STDOUT)))}
   end
