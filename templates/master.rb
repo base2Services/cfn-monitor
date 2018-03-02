@@ -172,6 +172,20 @@ CloudFormation do
     end
   end
 
+  hostParams = {
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
+  }
+
+  hosts ||= {}
+  if !hosts.empty?
+    Resource("HostsStack") do
+      Type 'AWS::CloudFormation::Stack'
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/hosts.json")
+      Property('TimeoutInMinutes', 5)
+      Property('Parameters', hostParams)
+    end
+  end
+
   last_commit_date = `git log -1 --date=short --pretty=format:%cd`
   last_commit_hash = `git log -1 --pretty=format:"%H"`
   render_date = Time.now.strftime("%Y-%m-%d")

@@ -44,8 +44,9 @@ CloudFormation do
     template = alarm[:template]
     name = alarm[:alarm]
     params = alarm[:parameters]
+    cmd = params['cmd']
 
-    alarmHash = Digest::MD5.hexdigest "#{resourceGroup}#{template}#{name}"
+    alarmHash = Digest::MD5.hexdigest "#{resourceGroup}#{template}#{name}#{cmd}"
 
     # Set defaults for optional parameters
     params['TreatMissingData']  ||= 'missing'
@@ -61,6 +62,7 @@ CloudFormation do
       replace_vars(params[k],'${endpoint}',resourceGroup)
       replace_vars(params[k],'${templateName}',template)
       replace_vars(params[k],'${alarmName}',name)
+      replace_vars(params[k],'${cmd}',cmd)
     end
 
     # Alarm action defaults
