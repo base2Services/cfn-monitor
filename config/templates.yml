@@ -41,6 +41,29 @@ templates:
       Period: 60
       EvaluationPeriods: 2
       MetricName: ResponseBodyRegexMatch
+  Nrpe:
+    Warn:
+      AlarmActions: warn
+      Namespace: NRPE
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'Host', Value: { 'Fn::Join': [ '-', [ { 'Fn::Sub': ['${env}', {'env': { Ref: 'EnvironmentName' } } ] }, '${resource}' ] ] } } ]
+      Statistic: Maximum
+      Threshold: 0
+      Period: 60
+      EvaluationPeriods: 2
+      MetricName: ${cmd}
+      AlarmDescription: { 'Fn::Join': [ ' ', [ Ref: 'MonitoredStack', { 'Fn::Sub': ['${resource}', {'env': { Ref: 'EnvironmentName' } } ] }, '${templateName}', '${cmd}', '${alarmName}' ] ] }
+    Crit:
+      AlarmActions: crit
+      Namespace: NRPE
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'Host', Value: { 'Fn::Join': [ '-', [ { 'Fn::Sub': ['${env}', {'env': { Ref: 'EnvironmentName' } } ] }, '${resource}' ] ] } } ]
+      Statistic: Maximum
+      Threshold: 1
+      Period: 60
+      EvaluationPeriods: 2
+      MetricName: ${cmd}
+      AlarmDescription: { 'Fn::Join': [ ' ', [ Ref: 'MonitoredStack', { 'Fn::Sub': ['${resource}', {'env': { Ref: 'EnvironmentName' } } ] }, '${templateName}', '${cmd}', '${alarmName}' ] ] }
   LambdaMetrics: # Lambda Functions deployed with a Function Name
     Errors:
       AlarmActions: crit
