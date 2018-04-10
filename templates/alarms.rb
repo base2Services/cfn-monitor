@@ -38,6 +38,14 @@ CloudFormation do
 
   alarms.each do |alarm|
 
+    # Should create or disable the alarms?
+    next if (defined? alarm[:parameters]['CreateAlarm']) and alarm[:parameters]['CreateAlarm'] == false
+
+    if (defined? alarm[:parameters]['DisableAlarm']) and alarm[:parameters]['DisableAlarm'] == true then
+      alarm[:parameters]['ActionsEnabled'] = 'false'
+      alarm[:parameters].delete('DisableAlarm')  # Remove the key from the CFN output
+    end
+
     resourceGroup = alarm[:resource]
     resources = resourceGroup.split('/')
     type = alarm[:type]
@@ -51,7 +59,7 @@ CloudFormation do
     # Set defaults for optional parameters
     params['TreatMissingData']  ||= 'missing'
     params['AlarmDescription']  ||= FnJoin(' ', [ Ref('MonitoredStack'), "#{template}", "#{name}", FnSub(resourceGroup, env: Ref('EnvironmentName')) ])
-    params['ActionsEnabled']    ||= true
+    params['ActionsEnabled']    = 'true' if !params.key?('ActionsEnabled')
     params['Period']            ||= 60
 
     # Replace variables in parameters
@@ -163,6 +171,6 @@ CloudFormation do
       Property('Unit', params['Unit']) unless params['Unit'].nil?
     end
 
-  end
+end
 
 end

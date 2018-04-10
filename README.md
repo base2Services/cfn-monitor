@@ -359,3 +359,14 @@ SnsTopicWarn | SNS topic used by warn type alarms
 ### Disabling Monitoring
 It is possible to globally disable / snooze / downtime all alarms by setting the `MonitoringDisabled` CloudFormation parameter to `true`.
 This will disable alarm actions without removing removing them.
+
+### Disabling and excluding alarms
+To disable or prevent creation of a specific alarm, specify either of the following parameters:
+```YAML
+templates:
+  MyAutoScalingGroup:
+    template: AutoScalingGroup
+    CPUUtilizationHighBase:
+      CreateAlarm: false    # Don't create the alarm
+      DisableAlarm: true    # Create the alarm but disable it
+```
