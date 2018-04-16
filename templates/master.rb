@@ -186,6 +186,20 @@ CloudFormation do
     end
   end
 
+  servicesParams = {
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
+  }
+
+  services ||= {}
+  if !services.empty?
+    Resource("ServicesStack") do
+      Type 'AWS::CloudFormation::Stack'
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/services.json")
+      Property('TimeoutInMinutes', 5)
+      Property('Parameters', servicesParams)
+    end
+  end
+
   last_commit_date = `git log -1 --date=short --pretty=format:%cd`
   last_commit_hash = `git log -1 --pretty=format:"%H"`
   render_date = Time.now.strftime("%Y-%m-%d")

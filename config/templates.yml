@@ -41,6 +41,18 @@ templates:
       Period: 60
       EvaluationPeriods: 2
       MetricName: ResponseBodyRegexMatch
+  Services:
+    Status:
+      AlarmActions: warn
+      Namespace: Services
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'Service', Value: { 'Fn::Join': [ '-', [ { 'Fn::Sub': ['${env}', {'env': { Ref: 'EnvironmentName' } } ] }, '${resource}' ] ] } } ]
+      Statistic: Maximum
+      Threshold: 0
+      Period: 60
+      EvaluationPeriods: 2
+      MetricName: ${resource}
+      AlarmDescription: { 'Fn::Join': [ ' ', [ Ref: 'MonitoredStack', { 'Fn::Sub': ['${resource}', {'env': { Ref: 'EnvironmentName' } } ] }, '${templateName}', '${alarmName}' ] ] }
   Nrpe:
     Warn:
       AlarmActions: warn

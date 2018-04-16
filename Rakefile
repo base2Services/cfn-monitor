@@ -66,9 +66,11 @@ namespace :cfn do
     metrics = customer_alarms_config['metrics']
     hosts = customer_alarms_config['hosts']
     hosts ||= {}
+    services = customer_alarms_config['services']
+    services ||= {}
     endpoints = customer_alarms_config['endpoints']
     endpoints ||= {}
-    rme = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts }
+    rme = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, services: services }
     source_bucket = customer_alarms_config['source_bucket']
 
     rme.each do | k,v |
@@ -360,6 +362,8 @@ namespace :cfn do
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/endpoints.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     File.open("#{output_path}/hosts.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/hosts.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
+    File.open("#{output_path}/services.json", 'w') { |file|
+      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/services.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     File.open("#{output_path}/master.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"],[:raw, "upload_path='#{upload_path}'"]],STDOUT)))}
   end
