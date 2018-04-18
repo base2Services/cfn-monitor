@@ -52,6 +52,7 @@ templates:
       Period: 60
       EvaluationPeriods: 2
       MetricName: ${cmd}
+      TreatMissingData: breaching
       AlarmDescription: { 'Fn::Join': [ ' ', [ Ref: 'MonitoredStack', { 'Fn::Sub': ['${resource}', {'env': { Ref: 'EnvironmentName' } } ] }, '${templateName}', '${cmd}', '${alarmName}' ] ] }
     Crit:
       AlarmActions: crit
