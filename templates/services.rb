@@ -34,12 +34,12 @@ CloudFormation do
         },
         {
           Effect: 'Allow',
-          Action: [ 'ssm:SendCommand', 'ssm:ListCommandInvocations', 'ssm:DescribeInstanceProperties' ],
+          Action: [ 'ssm:SendCommand', 'ssm:ListCommandInvocations', 'ssm:DescribeInstanceInformation' ],
           Resource: '*'
         },
         {
           Effect: 'Allow',
-          Action: [ 'autoscaling:SetInstanceHealth', 'ec2:DescribeInstances' ],
+          Action: [ 'autoscaling:SetInstanceHealth', 'autoscaling:DescribeAutoScalingInstances', 'ec2:DescribeInstances' ],
           Resource: '*'
         }]
       }
@@ -48,10 +48,10 @@ CloudFormation do
 
   Resource("ServicesCheckFunction") do
     Type 'AWS::Lambda::Function'
-    Property('Code', { S3Bucket: FnJoin('.',['base2.lambda',Ref('AWS::Region')]), S3Key: 'check-services.zip' })
-    Property('Handler', 'lambda_handler')
+    Property('Code', { S3Bucket: FnJoin('.',['base2.lambda',Ref('AWS::Region')]), S3Key: 'check-service.zip' })
+    Property('Handler', 'handler.check_service')
     Property('MemorySize', 128)
-    Property('Runtime', 'python2.7')
+    Property('Runtime', 'python3.6')
     Property('Timeout', 300)
     Property('Role', FnGetAtt("ServicesCheckLambdaExecutionRole",'Arn'))
   end
@@ -82,6 +82,7 @@ CloudFormation do
         }
       } ]
     })
+    DocumentType 'Command'
   end
 
   alarms.each do |alarm|
@@ -107,12 +108,14 @@ CloudFormation do
 
       # Create payload
       payload = {}
-      payload['service'] = alarm[:resource]
-      payload['environment'] = "${env}"
-      payload['region'] = "${region}"
-      payload['track_failed_ssm'] = services['track_failed_ssm']
-      payload['cw_namespace'] = 'Services'
-      payload['terminate_on_failure'] = services['terminate_on_failure']
+      payload['SERVICE'] = alarm[:resource]
+      payload['ENVIRONMENT'] = "${env}"
+      payload['REGION'] = "${region}"
+      payload['REPORT_FAILED_SSM_AGENT'] = services['ReportFailedSSMAgent'] ||= false
+      payload['TERMINATE_ON_FAILURE'] = services['TerminateOnFailure'] ||= false
+      payload['SSM_DOCUMENT'] = Ref('ServiceCheck')
+      # TODO: auto discovery of autoscaling groups based on cf logical resource id
+      # payload['AUTOSCALING_GROUP'] = []
 
       Resource("ServicesCheckSchedule#{servicesHash}") do
         Condition "Condition#{servicesHash}" if alarm[:environments] != ['all']

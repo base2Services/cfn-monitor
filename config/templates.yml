@@ -42,17 +42,30 @@ templates:
       EvaluationPeriods: 2
       MetricName: ResponseBodyRegexMatch
   Services:
-    Status:
+    FailedService:
       AlarmActions: warn
-      Namespace: Services
+      Namespace: ServiceChecks
       ComparisonOperator: GreaterThanThreshold
-      Dimensions: [ { Name: 'Service', Value: { 'Fn::Join': [ '-', [ { 'Fn::Sub': ['${env}', {'env': { Ref: 'EnvironmentName' } } ] }, '${resource}' ] ] } } ]
+      Dimensions: [ { Name: 'Service', Value: '${resource}' }, { Name: 'Environment', Value: { Ref: 'EnvironmentName' } } ]
       Statistic: Maximum
       Threshold: 0
       Period: 60
       EvaluationPeriods: 2
-      MetricName: ${resource}
-      AlarmDescription: { 'Fn::Join': [ ' ', [ Ref: 'MonitoredStack', { 'Fn::Sub': ['${resource}', {'env': { Ref: 'EnvironmentName' } } ] }, '${templateName}', '${alarmName}' ] ] }
+      MetricName: Failed_Service
+      AlarmDescription: { 'Fn::Join': [ ' ', [ Ref: 'MonitoredStack', { 'Fn::Sub': ['${resource}', {'env': { Ref: 'EnvironmentName' } } ] }, '${alarmName}' ] ] }
+      TreatMissingData: notBreaching
+    # FailedSSMAgent:
+    #   AlarmActions: warn
+    #   Namespace: ServiceChecks
+    #   ComparisonOperator: GreaterThanThreshold
+    #   Dimensions: [ { Name: 'Environment', Value: { Ref: 'EnvironmentName' } } ]
+    #   Statistic: Maximum
+    #   Threshold: 0
+    #   Period: 60
+    #   EvaluationPeriods: 2
+    #   MetricName: Failed_SSM_Agent
+    #   AlarmDescription: { 'Fn::Join': [ ' ', [ Ref: 'MonitoredStack', { 'Fn::Sub': ['${resource}', {'env': { Ref: 'EnvironmentName' } } ] }, '${alarmName}' ] ] }
+    #   TreatMissingData: notBreaching
   Nrpe:
     Warn:
       AlarmActions: warn
