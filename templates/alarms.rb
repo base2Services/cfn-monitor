@@ -117,6 +117,7 @@ CloudFormation do
         dimensionValue = Ref("GetPhysicalId#{resourceHash}")
         dimensionValue = FnSelect('5',FnSplit(':',Ref("GetPhysicalId#{resourceHash}"))) if dimensionsNames[index] == 'TargetGroup'
         dimensionValue = FnSelect('1',FnSplit('loadbalancer/',Ref("GetPhysicalId#{resourceHash}"))) if dimensionsNames[index] == 'LoadBalancer'
+        dimensionValue = FnSelect('1',FnSplit('service/',Ref("GetPhysicalId#{resourceHash}"))) if dimensionsNames[index] == 'ServiceName'
         dimensionValue = FnJoin('', [Ref("GetPhysicalId#{resourceHash}"),'-001']) if dimensionsNames[index] == 'CacheClusterId'
         # Prepare conditions based on physical resource ID values
         conditions << FnNot(FnEquals(Ref("GetPhysicalId#{resourceHash}"),'null'))
