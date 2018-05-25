@@ -285,6 +285,35 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 60
+  RedshiftCluster: # AWS::Redshift::Cluster
+    CPUUtilizationHighSpike:
+      AlarmActions: crit
+      Namespace: AWS/Redshift
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ClusterIdentifier
+      Statistic: Minimum
+      Threshold: 95
+      EvaluationPeriods: 10
+    CPUUtilizationHighBase:
+      AlarmActions: warn
+      Namespace: AWS/Redshift
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ClusterIdentifier
+      Statistic: Minimum
+      Threshold: 75
+      EvaluationPeriods: 60
+    UnHealthyCluster:
+      AlarmActions: crit
+      Namespace: AWS/Redshift
+      MetricName: HealthStatus
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ClusterIdentifier
+      Statistic: Maximum
+      Threshold: 0
+      EvaluationPeriods: 10
+      TreatMissingData: notBreaching
   ECSCluster: # AWS::ECS::Cluster
     MemoryUtilizationWarn:
       AlarmActions: warn
