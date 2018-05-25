@@ -342,6 +342,32 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 10
+  ECSService: #AWS::ECS::Service
+    UnHealthyTask:
+      AlarmActions: crit
+      MetricName: MemoryUtilization
+      Namespace: AWS/ECS
+      Statistic: SampleCount
+      DimensionsName: ServiceName/ClusterName
+      Period: 60
+      EvaluationPeriods: 10
+      DatapointsToAlarm: 8
+      Threshold: 0.0
+      ComparisonOperator: LessThanOrEqualToThreshold
+      TreatMissingData: breaching
+  ECSTasks:
+    UnHealthyTaskWarn:
+      AlarmActions: warn
+      MetricName: MemoryUtilization
+      Namespace: AWS/ECS
+      Statistic: SampleCount
+      DimensionsName: ServiceName/ClusterName
+      Period: 60
+      EvaluationPeriods: 10
+      DatapointsToAlarm: 10
+      Threshold: 1.0
+      ComparisonOperator: LessThanOrEqualToThreshold
+      TreatMissingData: breaching
   ElastiCacheReplicationGroup: # AWS::ElastiCache::ReplicationGroup
     FreeableMemoryWarn:
       AlarmActions: warn
