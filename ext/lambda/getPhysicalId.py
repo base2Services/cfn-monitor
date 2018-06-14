@@ -36,7 +36,11 @@ def findResource(client,resource):
         sleep_time = 1
         for i in range(max_retries):
             try:
-                response = client.list_stack_resources(StackName=resource[0])
+                paginator = client.get_paginator('list_stack_resources')
+                page_iterator = paginator.paginate(StackName=resource[0])
+                response = []
+                for page in page_iterator:
+                    response = response + page['StackResourceSummaries']
             except ClientError as e:
                 print e
                 time.sleep(sleep_time)
@@ -46,7 +50,7 @@ def findResource(client,resource):
                 break
         else:
             return
-        for r in response['StackResourceSummaries']:
+        for r in response:
             if r['LogicalResourceId'] == resource[1]:
                 return r['PhysicalResourceId']
     else:
@@ -60,3 +64,4 @@ def handler(event, context):
     responseData = {}
     responseData['PhysicalResourceId'] = findResource(client,findNestedStack(client,resource))
     cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, "CustomResourcePhysicalID")
+    
