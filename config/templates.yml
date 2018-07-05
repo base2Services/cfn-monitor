@@ -397,3 +397,32 @@ templates:
       Statistic: Minimum
       Threshold: 90
       EvaluationPeriods: 5
+  ApiGateway: #AWS:ApiGateway
+    ApiEndpoint5xx:
+      AlarmActions: crit
+      Namespace: AWS/ApiGateway
+      MetricName: 5XXError
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ApiName
+      Statistic: Sum
+      Threshold: 5
+      EvaluationPdyneriods: 2
+  DynamoDB: #AWS:DynamoDB
+    DynamoDBReadUsage:
+      AlarmActions: crit
+      Namespace: AWS/DynamoDB
+      MetricName: ConsumedReadCapacityUnits
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: TableName
+      Statistic: Sum
+      Threshold: 80
+      EvaluationPeriods: 2
+    DynamoDBWriteUsage:
+      AlarmActions: crit
+      Namespace: AWS/DynamoDB
+      MetricName: ConsumedWriteCapacityUnits
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: TableName
+      Statistic: Sum
+      Threshold: 80
+      EvaluationPeriods: 2
