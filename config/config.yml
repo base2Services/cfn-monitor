@@ -10,3 +10,10 @@ resource_defaults:
   AWS::EFS::FileSystem: ElasticFileSystem
   AWS::EC2::Instance: Ec2Instance
   AWS::Redshift::Cluster: RedshiftCluster
+  AWS::DynamoDB::Table: AssetsTable
+  AWS::DynamoDB::Table: AccountsTable
+  AWS::DynamoDB::Table: CardsTable
+  AWS::DynamoDB::Table: LayoutsTable
+  AWS::DynamoDB::Table: PlayersTable
+  AWS::DynamoDB::Table: TemplatesTable
+  AWS::DynamoDB::Table: UsersTable
