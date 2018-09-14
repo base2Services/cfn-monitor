@@ -105,7 +105,7 @@ CloudFormation do
         payload['cmd'] = cmd
 
         cmdHash = Digest::MD5.hexdigest cmd
-        Resource("HttpCheckSchedule#{hostHash}#{cmdHash}") do
+        Resource("NrpeCheckSchedule#{hostHash}#{cmdHash}") do
           Condition "Condition#{hostHash}" if alarm[:environments] != ['all']
           Type 'AWS::Events::Rule'
           Property('Description', FnSub( "${env}-#{alarm[:resource]} #{cmd}", env: Ref('EnvironmentName') ) )
