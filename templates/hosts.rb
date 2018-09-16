@@ -66,7 +66,7 @@ CloudFormation do
       Resource("SecurityGroup#{hostHash}") {
         Condition "Condition#{hostHash}" if alarm[:environments] != ['all']
         Type 'AWS::EC2::SecurityGroup'
-        Property('VpcId', host['vpdId'])
+        Property('VpcId', host['vpcId'])
         Property('GroupDescription', "Monitoring Security Group #{hostHash}")
       }
 
