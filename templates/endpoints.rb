@@ -46,7 +46,7 @@ CloudFormation do
       payload['PAYLOAD'] = ep['payload'] if !ep['payload'].nil?
 
       endpointHash =  Digest::MD5.hexdigest alarm[:resource]
-      Resource("HttpCheckSchedule#{endpointHash}") do
+      Resource("NrpeCheckSchedule#{endpointHash}") do
         Condition "Condition#{endpointHash}" if alarm[:environments] != ['all']
         Type 'AWS::Events::Rule'
         Property('Description', FnSub( payload['ENDPOINT'], env: Ref('EnvironmentName') ) )
