@@ -4,4 +4,4 @@ build:
 	docker build -t cloudwatch-monitoring:latest .
 
 run:
-	docker run -ti --rm cloudwatch-monitoring:latest /bin/bash
+	docker run -ti --rm cloudwatch-monitoring:latest

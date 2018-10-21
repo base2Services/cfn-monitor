@@ -1,6 +1,6 @@
 FROM amazonlinux
 
-ENV CWMROOT /opt/base2/cloudwatch-monitoring/
+ENV CWMROOT /work/
 ENV LANG en_US.utf8
 SHELL ["/bin/bash", "-c"]
 COPY . ${CWMROOT}
@@ -13,5 +13,6 @@ RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A170311380
     cd "${CWMROOT}"  && \
     gem install rake cfndsl aws-sdk && \
     rake cfn:test
-
+VOLUME ${CWMROOT}/ciinaboxes
 WORKDIR ${CWMROOT}
+SHELL ["/bin/bash", "-l", "-c"]
