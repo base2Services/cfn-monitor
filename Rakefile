@@ -19,6 +19,11 @@ namespace :cfn do
   global_templates_config = YAML.load(File.read(global_templates_config_file))
   config = YAML.load(File.read(config_file))
 
+  desc('Simple test command')
+  task :test do
+    puts "Seems to work"
+  end
+
   desc('Generate CloudFormation for CloudWatch alarms')
   task :generate do
 
