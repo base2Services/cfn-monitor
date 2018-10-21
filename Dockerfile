@@ -10,7 +10,7 @@ RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A170311380
     source /etc/profile.d/rvm.sh && \
     yes "" | rvm install 2.5  && \
     rvm use 2.5 && \
-    gem install rake cfndsl aws-sdk digest && \
+    gem install rake cfndsl aws-sdk && \
     cd "${CWMROOT}"
 
 WORKDIR ${CWMROOT}
