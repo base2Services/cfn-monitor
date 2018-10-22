@@ -14,3 +14,8 @@ test:
 
 run:
 	docker run -ti --rm cloudwatch-monitoring:latest
+
+push-test:
+	#Push to b2-dev-reference ecr
+	docker tag cloudwatch-monitoring:latest 857301260320.dkr.ecr.ap-southeast-2.amazonaws.com/cloudwatch_monitoring_ecr:latest
+	docker push 857301260320.dkr.ecr.ap-southeast-2.amazonaws.com/cloudwatch_monitoring_ecr:latest
