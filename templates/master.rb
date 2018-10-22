@@ -200,8 +200,13 @@ CloudFormation do
     end
   end
 
-  last_commit_date = `git log -1 --date=short --pretty=format:%cd`
-  last_commit_hash = `git log -1 --pretty=format:"%H"`
+  last_commit_date = ''
+  last_commit_hash = ''
+
+  Dir.chdir("ciinaboxes/#{customer}") {
+    last_commit_date = `git log -1 --date=short --pretty=format:%cd 2>&1`
+    last_commit_hash = `git log -1 --pretty=format:"%H" 2>&1`
+  }
   render_date = Time.now.strftime("%Y-%m-%d")
 
   Output("TemplateDate") { Value(last_commit_date) }

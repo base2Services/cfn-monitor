@@ -370,6 +370,6 @@ namespace :cfn do
     File.open("#{output_path}/services.json", 'w') { |file|
       file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/services.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
     File.open("#{output_path}/master.json", 'w') { |file|
-      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"],[:raw, "upload_path='#{upload_path}'"]],STDOUT)))}
+      file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("templates/master.rb",[[:yaml, customer_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"],[:raw, "upload_path='#{upload_path}'"],[:raw, "customer='#{customer}'"]],STDOUT)))}
   end
 end
