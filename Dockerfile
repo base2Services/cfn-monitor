@@ -2,7 +2,7 @@ FROM amazonlinux
 
 ENV CWMROOT /work/
 ENV LANG en_US.utf8
-SHELL ["/bin/bash", "-c"]
+SHELL ["/bin/bash", "-l", "-c"]
 COPY . ${CWMROOT}
 RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
     yum install curl which tar gzip procps bzip2 gcc gcc-c++ make zlib-devel openssl-devel -y && \
@@ -15,4 +15,5 @@ RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A170311380
     rake cfn:test
 VOLUME ${CWMROOT}/ciinaboxes
 WORKDIR ${CWMROOT}
-SHELL ["/bin/bash", "-l", "-c"]
+CMD ["/bin/bash", "-l"]
+ENTRYPOINT ["/bin/bash", "-l", "${CWMROOT}/entrypoint.sh"]
