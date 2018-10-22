@@ -16,4 +16,4 @@ RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A170311380
 VOLUME ${CWMROOT}/ciinaboxes
 WORKDIR ${CWMROOT}
 CMD ["/bin/bash", "-l"]
-ENTRYPOINT ["/bin/bash", "-l", "${CWMROOT}/entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "-l", "./entrypoint.sh"]

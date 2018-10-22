@@ -10,7 +10,7 @@ test:
 	docker run -ti --rm cloudwatch-monitoring:latest env | grep "GEM_PATH" > /dev/null || { echo "No gempath, not loading login shell" && false; }
 	docker run -ti --rm cloudwatch-monitoring:latest rake --tasks
 	docker run -ti --rm cloudwatch-monitoring:latest rake cfn:test
-	echo | docker run -ti --rm cloudwatch-monitoring:latest
+	echo ls | docker run -i --rm cloudwatch-monitoring:latest | grep "templates" > /dev/null || { echo "Stdin mode isn't working" && false; }
 
 run:
 	docker run -ti --rm cloudwatch-monitoring:latest
