@@ -370,3 +370,7 @@ templates:
       CreateAlarm: false    # Don't create the alarm
       DisableAlarm: true    # Create the alarm but disable it
 ```
+
+## Docker file 
+
+You use this as you would expect most docker containers to work. You will have to volume mount the customers in to "/work/ciinaboxes/"
