@@ -1,9 +1,7 @@
 FROM ruby:2.5-alpine
 
-COPY . /src
+RUN gem install cfn_monitor
 
 WORKDIR /src
 
-RUN bundle install
-
-CMD ["rake","-T"]
+CMD ["cfn_monitor"]

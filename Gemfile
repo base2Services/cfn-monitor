@@ -1,7 +1,6 @@
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-gem 'aws-sdk-elasticloadbalancingv2'
-gem 'aws-sdk-s3'
-gem 'aws-sdk-cloudformation'
-gem 'cfndsl'
-gem 'rake'
+git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+
+# Specify your gem's dependencies in cfn_monitor.gemspec
+gemspec

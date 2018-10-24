@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require "cfn_monitor"
+
+CfnMonitor::Commands.start( ARGV )

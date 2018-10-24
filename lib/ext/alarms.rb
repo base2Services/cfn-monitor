@@ -1,14 +1,3 @@
-
-def get_alarm_envs (params)
-  envs = []
-  params.each do | key,value |
-    if key.include? '.'
-      envs << key.split('.').last
-    end
-  end
-  return envs
-end
-
 def replace_vars(hash,find,replace)
   if hash.is_a?(Hash)
     hash.each do |k, v|
