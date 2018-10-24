@@ -1,27 +1,77 @@
 # cloudwatch-monitoring
 
-## Configuration
-Create a symlink named "ciinaboxes" with a target of your base2-ciinabox repo (similar to ciinabox-jenkins)
+## About
 
-Example (with cloudwatch-monitoring and base2-ciinabox in the same directory):
+CloudWatch monitoring tool can query a cloudformation stack and return
+monitorable resources that can be placed into a config file. This config
+can then be used to generate a cloudformation stack to create and manage
+cloudwatch alarms.
+
+It is packaged as a docker container `base2/cfn_monitor` and
+can be run by volume mounting in a local directory to access the config
+or by using within AWS CodePipeline.
+
+## Commands
+
 ```bash
-cd cloudwatch-monitoring
-ln -s ../base2-ciinabox ciinaboxes
+Commands:
+  cfn_monitor --version, -v   # print the version
+  cfn_monitor deploy          # Deploys gerenated cfn templates to S3 bucket
+  cfn_monitor generate        # Generate monitoring cloudformation templates
+  cfn_monitor help [COMMAND]  # Describe available commands or one specific command
+  cfn_monitor query           # Queries a cloudformation stack for monitorable resources
 ```
 
-## Usage
+## Run With Docker
+
+The docker image will manage the runtime environment and dependencies.
+You can pass in your AWS credentials and set the region and profile with environment variables.
+
+Example
 ```bash
-rake cfn:generate <customer> [application]
+docker run -it --rm \
+  -v $(pwd):/src \
+  -v $HOME/.aws:/root/.aws \
+  -e AWS_REGION=us-east-1 \
+  -e AWS_PROFILE=default \
+  base2/cfn_monitor cfn_monitor <command> [parameters]
 ```
 
-Parameter | Value
---- | ---
-customer | The customer's ciinabox name (directory in base2-ciinabox repo)
-application | (Optional) For use when a customer has multiple applications
+## Configuration files
 
-## Alarm configuration
-All configuration takes place in the base2-ciinabox repo under the customer's ciinabox directory.
-Create a directory name "monitoring" (similar to the "jenkins" directory for ciinabox-jenkins), this directory will contain the "alarms.yml" file and optional "templates.yml" file.
+There are 2 config files that can be utilised to configure your cloudwatch alarms.
+
+- alarms.yaml - Configure the resources you want to monitor
+- template.yaml - Create or override alarm templates
+
+The bellow config structure allows for multiple monitoring stacks to be kept with
+a single code repository separated by directories parameterised as `<application>`.
+
+```
+.
+├── _application_1
+|   ├── alarms.yaml
+|   └── template.yaml
+└── _application_2
+    ├── alarms.yaml
+    └── template.yaml
+```
+
+## Generate
+
+The generate command takes you alarm configuration and turns it into
+cloudformation templates to be deployed into AWS.
+
+```bash
+Usage:
+  cfn_monitor generate
+
+Options:
+  a, [--application=APPLICATION]  # application name
+
+Description:
+  Generates cloudformation templates from the alarm configuration and output to the output/ directory.
+```
 
 ### alarms.yml
 
@@ -38,7 +88,7 @@ resources:
 Example:
 
 ```YAML
-source_bucket: source.customer.com
+source_bucket: source.example.com
 
 resources:
   RDSStack.RDS: RDSInstance
@@ -118,27 +168,30 @@ resources:
 ```
 
 #### Auto generate alarms config for resources
-You can query an existing stack for monitorable resources using the `query` rake task. This will provide a list of resources in the correct config syntax, including the nested stacks and the default templates for those resources.
+You can query an existing stack for monitorable resources using the `query` command.
+This will provide a list of resources in the correct config syntax,
+including the nested stacks and the default templates for those resources.
 
 Example:
 
 ```bash
-eval $(elmer get-creds [customer] prod --format shell)
-rake cfn:query <region> <stack> <customer> [application]
-```
+Usage:
+  cfn_monitor query
 
-Parameter | Value
---- | ---
-region | The region of the stack you are querying (eg. ap-southeast-2)
-stack | The name of the stack you are querying (eg. prod)
-customer | The customer's ciinabox name (directory in base2-ciinabox repo)
-application | (Optional) For use when a customer has multiple applications
+Options:
+  a, [--application=APPLICATION]  # application name
+  s, [--stack=STACK]              # cfn stack name
+
+Description:
+  This will provide a list of resources in the correct config syntax,
+  including the nested stacks and the default templates for those resources.
+```
 
 Make sure you query a prod sized stack so that all conditional resources are included.
 The output will list all monitorable resources found in the stack, the coverage your current `alarms.yml` config provides, and a list of any resources missing from your current `alarms.yml` config.
 
 #### Templates
-The "template" value you specify for a resource refers to either a default template in the `config/templates.yml` file of this repo, or a custom/override template in the `monitoring/templates.yml` file of the customer's ciinabox monitoring directory. This template can contain multiple alarms. The example below shows the default `RDSInstance` template, which has 2 alarms (`FreeStorageSpaceCrit` and `FreeStorageSpaceTask`). Using the `RDSInstance` template in this example will create 2 CloudWatch alarms for the `RDS` resource in the `RDSStack` nested stack.
+The "template" value you specify for a resource refers to either a default templates, or a custom/override template in your own `templates.yml`. This template can contain multiple alarms. The example below shows the default `RDSInstance` template, which has 2 alarms (`FreeStorageSpaceCrit` and `FreeStorageSpaceTask`). Using the `RDSInstance` template in this example will create 2 CloudWatch alarms for the `RDS` resource in the `RDSStack` nested stack.
 
 Example: `alarms.yml`
 ```YAML
@@ -171,13 +224,9 @@ templates:
       EvaluationPeriods: 1
 ```
 
-### templates.yml
-
-You should start by using the default templates in `cloudwatch-monitoring/config/templates.yml` and override, replace or augment them with custom templates in `base2-ciinabox/[customer]/monitoring/templates` as required.
-
 #### Globally overriding a template
 
-You can override a default template in the customer's `templates.yml` file if all instances of a particular resource require a non standard configuration for that customer.
+You can override a default template in your own `templates.yml` file if all instances of a particular resource require a non standard configuration.
 
 Example:
 ```YAML
@@ -336,14 +385,15 @@ An SNS topic is required per alarm action, these topics and their subscriptions 
 The rendered CloudFormation templates should be deployed to `[source_bucket]/cloudformation/monitoring/`.
 
 ```bash
-eval $(elmer get-creds [customer] ops --format shell)
-rake cfn:deploy <customer> [application]
-```
+Usage:
+  cfn_monitor deploy
 
-Parameter | Value
---- | ---
-customer | The customer's ciinabox name (directory in base2-ciinabox repo)
-application | (Optional) For use when a customer has multiple applications
+Options:
+  a, [--application=APPLICATION]  # application name
+
+Description:
+  Deploys gerenated cloudformation templates to the specified S3 source_bucket
+```
 
 Launch the Monitoring stack in the desired account with the following CloudFormation parameters:
 

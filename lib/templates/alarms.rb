@@ -1,4 +1,5 @@
 require 'cfndsl'
+require_relative '../ext/alarms'
 
 CloudFormation do
   Description("CloudWatch Alarms #{template_number}")

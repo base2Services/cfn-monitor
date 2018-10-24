@@ -1,4 +1,7 @@
 require 'cfndsl'
+require 'cfn_monitor/version'
+
+src_lambda_dir = File.expand_path("../../lambda", __FILE__)
 
 CloudFormation do
 
@@ -92,7 +95,7 @@ CloudFormation do
 
   Resource("GetPhysicalIdFunction") do
     Type 'AWS::Lambda::Function'
-    Property('Code', { ZipFile: FnJoin("", IO.readlines("ext/lambda/getPhysicalId.py").each { |line| "\"#{line}\"," }) })
+    Property('Code', { ZipFile: FnJoin("", IO.readlines("#{src_lambda_dir}/getPhysicalId.py").each { |line| "\"#{line}\"," }) })
     Property('Handler', 'index.handler')
     Property('MemorySize', 128)
     Property('Runtime', 'python2.7')
@@ -102,7 +105,7 @@ CloudFormation do
 
   Resource("GetEnvironmentNameFunction") do
     Type 'AWS::Lambda::Function'
-    Property('Code', { ZipFile: FnJoin("", IO.readlines("ext/lambda/getEnvironmentName.py").each { |line| "\"#{line}\"," }) })
+    Property('Code', { ZipFile: FnJoin("", IO.readlines("#{src_lambda_dir}/getEnvironmentName.py").each { |line| "\"#{line}\"," }) })
     Property('Handler', 'index.handler')
     Property('MemorySize', 128)
     Property('Runtime', 'python2.7')
@@ -200,13 +203,8 @@ CloudFormation do
     end
   end
 
-  last_commit_date = `git log -1 --date=short --pretty=format:%cd`
-  last_commit_hash = `git log -1 --pretty=format:"%H"`
-  render_date = Time.now.strftime("%Y-%m-%d")
-
-  Output("TemplateDate") { Value(last_commit_date) }
-  Output("TemplateHash") { Value(last_commit_hash) }
-  Output("RenderDate") { Value(render_date) }
+  Output("CfnMonitorVersion") { Value(CfnMonitor::VERSION) }
+  Output("RenderDate") { Value(Time.now.strftime("%Y-%m-%d")) }
   Output("MonitoredStack") { Value(Ref("MonitoredStack")) }
   Output("StackName") { Value(Ref("AWS::StackName")) }
   Output("Region") { Value(Ref("AWS::Region")) }

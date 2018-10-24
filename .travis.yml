@@ -1,0 +1,15 @@
+sudo: required
+dist: trusty
+rvm:
+  - 2.5
+script:
+  - rspec
+  - gem build cfn_monitor.gemspec
+  - gem install cfn_monitor-*.gem
+  - cfn_monitor --version
+deploy:
+  provider: rubygems
+  api_key: "${RUBYGEMS_API_KEY}"
+  on:
+   all_branches: true
+   condition: $TRAVIS_BRANCH =~ ^develop|master &&  $TRAVIS_EVENT_TYPE =~ ^push|api$ && $TRAVIS_REPO_SLUG == "base2Services/cfn-start-stop-stack"
