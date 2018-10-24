@@ -1,4 +1,4 @@
-# cfn-manage
+# cfn-monitor
 
 ## About
 
