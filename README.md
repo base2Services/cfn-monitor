@@ -1,4 +1,4 @@
-# cloudwatch-monitoring
+# cfn-manage
 
 ## About
 
