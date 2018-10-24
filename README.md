@@ -1,23 +1,54 @@
 # cloudwatch-monitoring
 
-## Configuration
-Create a symlink named "ciinaboxes" with a target of your base2-ciinabox repo (similar to ciinabox-jenkins)
+## About
 
-Example (with cloudwatch-monitoring and base2-ciinabox in the same directory):
+CloudWatch monitoring tool can query a cloudformation stack and return
+monitorable resources that can be placed into a config file. This config
+can then be used to generate a cloudformation stack to create and manage
+cloudwatch alarms.
+
+It is packaged as a docker container `base2/cloudwatch-monitoring` and
+can be run by volume mounting in a local directory to access the config
+or by using within AWS CodePipeline.
+
+## Configuration structure
+
+Allowance for multiple monitoring stacks to be kept with a single code
+repository separated by directories parameterised as `<application>`.
+
+```
+.
+├── _application_1
+|   ├── alarms.yaml
+|   └── template.yaml
+└── _application_2
+    ├── alarms.yaml
+    └── template.yaml
+```
+
+## Run With Docker
+
+The docker image will manage the runtime environment and dependencies.
+You can pass in your AWS credentials and set the region and profile with environment variables.
+
+Example
 ```bash
-cd cloudwatch-monitoring
-ln -s ../base2-ciinabox ciinaboxes
+docker run -it --rm \
+  -v $(pwd):/data \
+  -v $HOME/.aws:/root/.aws \
+  -e AWS_REGION=us-east-1 \
+  -e AWS_PROFILE=default \
+  base2/cloudwatch-monitoring rake <command> [parameters]
 ```
 
 ## Usage
 ```bash
-rake cfn:generate <customer> [application]
+rake cfn:generate <application>
 ```
 
-Parameter | Value
---- | ---
-customer | The customer's ciinabox name (directory in base2-ciinabox repo)
-application | (Optional) For use when a customer has multiple applications
+Parameter | Required | Value
+--- | --- | ---
+application | True |
 
 ## Alarm configuration
 All configuration takes place in the base2-ciinabox repo under the customer's ciinabox directory.
@@ -131,7 +162,6 @@ Parameter | Value
 --- | ---
 region | The region of the stack you are querying (eg. ap-southeast-2)
 stack | The name of the stack you are querying (eg. prod)
-customer | The customer's ciinabox name (directory in base2-ciinabox repo)
 application | (Optional) For use when a customer has multiple applications
 
 Make sure you query a prod sized stack so that all conditional resources are included.
@@ -342,7 +372,6 @@ rake cfn:deploy <customer> [application]
 
 Parameter | Value
 --- | ---
-customer | The customer's ciinabox name (directory in base2-ciinabox repo)
 application | (Optional) For use when a customer has multiple applications
 
 Launch the Monitoring stack in the desired account with the following CloudFormation parameters:

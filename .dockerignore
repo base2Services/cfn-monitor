@@ -1,0 +1,6 @@
+.git/
+.gitignore
+
+ciinaboxes/
+output/
+monitoring_config/

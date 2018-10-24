@@ -200,13 +200,7 @@ CloudFormation do
     end
   end
 
-  last_commit_date = `git log -1 --date=short --pretty=format:%cd`
-  last_commit_hash = `git log -1 --pretty=format:"%H"`
-  render_date = Time.now.strftime("%Y-%m-%d")
-
-  Output("TemplateDate") { Value(last_commit_date) }
-  Output("TemplateHash") { Value(last_commit_hash) }
-  Output("RenderDate") { Value(render_date) }
+  Output("RenderDate") { Value(Time.now.strftime("%Y-%m-%d")) }
   Output("MonitoredStack") { Value(Ref("MonitoredStack")) }
   Output("StackName") { Value(Ref("AWS::StackName")) }
   Output("Region") { Value(Ref("AWS::Region")) }

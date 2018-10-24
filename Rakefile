@@ -7,13 +7,18 @@ require_relative 'ext/common_helper'
 require_relative 'ext/alarms'
 require 'fileutils'
 require 'digest'
-require 'aws-sdk'
+require 'aws-sdk-cloudformation'
+require 'aws-sdk-s3'
+require 'aws-sdk-elasticloadbalancingv2'
 
 namespace :cfn do
 
   # Global and customer config files
   config_file = 'config/config.yml'
   global_templates_config_file = 'config/templates.yml'
+
+  # Global variables
+  path = ENV['MONITORING_PATH'] || ''
 
   # Load global config files
   global_templates_config = YAML.load(File.read(global_templates_config_file))
@@ -23,26 +28,18 @@ namespace :cfn do
   task :generate do
 
     ARGV.each { |a| task a.to_sym do ; end }
-    customer = ARGV[1]
-    application = ARGV[2]
+    application = ARGV[1]
 
-    if !customer
+    if !application
       puts "Usage:"
-      puts "rake cfn:generate <customer> [application]"
+      puts "rake cfn:generate <application>"
       exit 1
     end
 
-    if application
-      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/alarms.yml"
-      customer_templates_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/templates.yml"
-      output_path = "output/#{customer}/#{application}"
-      upload_path = "cloudformation/monitoring/#{application}"
-    else
-      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
-      customer_templates_config_file = "ciinaboxes/#{customer}/monitoring/templates.yml"
-      output_path = "output/#{customer}"
-      upload_path = "cloudformation/monitoring"
-    end
+    customer_alarms_config_file = "#{path}#{application}/alarms.yml"
+    customer_templates_config_file = "#{path}#{application}/templates.yml"
+    output_path = "#{path}output/#{application}"
+    upload_path = "cloudformation/monitoring/#{application}"
 
     # Load customer config files
     if File.file?(customer_alarms_config_file)
@@ -167,30 +164,23 @@ namespace :cfn do
     end
 
     ARGV.each { |a| task a.to_sym do ; end }
-    write_cfdndsl_template(temp_file_path,temp_file_paths,customer_alarms_config_file,customer,source_bucket,template_envs,output_path,upload_path)
+    write_cfdndsl_template(temp_file_path,temp_file_paths,customer_alarms_config_file,source_bucket,template_envs,output_path,upload_path)
   end
 
   desc('Deploy cloudformation templates to S3')
   task :deploy do
     ARGV.each { |a| task a.to_sym do ; end }
-    customer = ARGV[1]
-    application = ARGV[2]
+    application = ARGV[1]
 
-    if !customer
+    if !application
       puts "Usage:"
-      puts "rake cfn:deploy <customer> [application]"
+      puts "rake cfn:deploy <application>"
       exit 1
     end
 
-    if application
-      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/alarms.yml"
-      output_path = "output/#{customer}/#{application}"
-      upload_path = "cloudformation/monitoring/#{application}"
-    else
-      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
-      output_path = "output/#{customer}"
-      upload_path = "cloudformation/monitoring"
-    end
+    customer_alarms_config_file = "#{path}#{application}/alarms.yml"
+    output_path = "#{path}output/#{application}"
+    upload_path = "cloudformation/monitoring/#{application}"
 
     # Load customer config files
     if File.file?(customer_alarms_config_file)
@@ -224,20 +214,15 @@ namespace :cfn do
     ARGV.each { |a| task a.to_sym do ; end }
     region = ARGV[1]
     stack = ARGV[2]
-    customer = ARGV[3]
-    application = ARGV[4]
+    application = ARGV[3]
 
-    if !customer || !stack || !region
+    if !application || !stack || !region
       puts "Usage:"
-      puts "rake cfn:query <region> <stack> <customer> [application]"
+      puts "rake cfn:query <region> <stack> <application>"
       exit 1
     end
 
-    if application
-      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/#{application}/alarms.yml"
-    else
-      customer_alarms_config_file = "ciinaboxes/#{customer}/monitoring/alarms.yml"
-    end
+    customer_alarms_config_file = "#{path}#{application}/alarms.yml"
 
     # Load customer config files
     customer_alarms_config = YAML.load(File.read(customer_alarms_config_file)) if File.file?(customer_alarms_config_file)
@@ -246,7 +231,7 @@ namespace :cfn do
 
     puts "-----------------------------------------------"
     puts "stack: #{stack}"
-    puts "customer: #{customer}"
+    puts "application: #{application}"
     puts "region: #{region}"
     puts "-----------------------------------------------"
     puts "Searching Stacks for Monitorable Resources"
@@ -343,14 +328,14 @@ namespace :cfn do
       puts "-----------------------------------------------"
     end
     puts "Monitorable resources in #{stack} stack: #{stackResourceCount}"
-    puts "Resources in #{customer} alarms config: #{configResourceCount}"
+    puts "Resources in #{application} alarms config: #{configResourceCount}"
     if stackResourceCount > 0
       puts "Coverage: #{100-(configResources.count*100/stackResourceCount)}%"
     end
     puts "-----------------------------------------------"
   end
 
-  def write_cfdndsl_template(alarms_config,configs,customer_alarms_config_file,customer,source_bucket,template_envs,output_path,upload_path)
+  def write_cfdndsl_template(alarms_config,configs,customer_alarms_config_file,source_bucket,template_envs,output_path,upload_path)
     FileUtils::mkdir_p output_path
     configs.each_with_index do |config,index|
       File.open("#{output_path}/resources#{index}.json", 'w') { |file|
