@@ -1,10 +1,11 @@
 sudo: required
 dist: trusty
+language: ruby
 rvm:
   - 2.5
 script:
   - bundle install
-  - rspec
+  - bundle exec rake spec
   - gem build cfn_monitor.gemspec
   - gem install cfn_monitor-*.gem
   - cfn_monitor --version
