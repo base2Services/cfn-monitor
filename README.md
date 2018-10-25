@@ -1,5 +1,7 @@
 # cfn-monitor
 
+[![Build Status](https://travis-ci.org/base2Services/cfn-monitor.svg?branch=master)](https://travis-ci.org/base2Services/cfn-monitor)
+
 ## About
 
 CloudWatch monitoring tool can query a cloudformation stack and return
