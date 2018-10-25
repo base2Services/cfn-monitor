@@ -38,7 +38,7 @@ module CfnMonitor
       # Merge custom template configs over global template configs
       if File.file?(custom_templates_config_file)
         custom_templates_config = YAML.load(File.read(custom_templates_config_file))
-        templates = CommonHelper.deep_merge(global_templates_config, custom_templates_config)
+        templates = CfnMonitor::Utils.deep_merge(global_templates_config, custom_templates_config)
       else
         templates = global_templates_config
       end
@@ -82,7 +82,7 @@ module CfnMonitor
                 if !templates['templates'][templateEnabled]['template'].nil?
                   template_from = Marshal.load( Marshal.dump(templates['templates'][templates['templates'][templateEnabled]['template']]) )
                   template_to = templates['templates'][templateEnabled].without('template')
-                  template_merged = CommonHelper.deep_merge(template_from, template_to)
+                  template_merged = CfnMonitor::Utils.deep_merge(template_from, template_to)
                   templates['templates'][templateEnabled] = template_merged
                 end
                 templates['templates'][templateEnabled].each do | alarm,parameters |
