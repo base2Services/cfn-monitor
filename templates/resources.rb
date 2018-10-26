@@ -46,7 +46,11 @@ CloudFormation do
           Type 'Custom::GetResourcePhysicalId'
           Property('ServiceToken', Ref('GetPhysicalIdFunctionArn'))
           Property('StackName', Ref('MonitoredStack'))
-          Property('LogicalResourceId', FnJoin( '.', [ Ref('MonitoredStack'), resource ] ))
+          if resource.include? "::"
+            Property('LogicalResourceId', resource.gsub('::','.') )
+          else
+            Property('LogicalResourceId', FnJoin( '.', [ Ref('MonitoredStack'), resource ] ))
+          end
           Property('Region', Ref('AWS::Region'))
           Property('ConfigToggle', Ref('ConfigToggle'))
         end
