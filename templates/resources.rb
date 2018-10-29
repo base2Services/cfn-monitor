@@ -56,7 +56,7 @@ CloudFormation do
         end
         customResources << "GetPhysicalId#{resourceHash}"
         # Create outputs for user reference
-        Output("#{resource.delete('.')}") { Value(FnGetAtt("GetPhysicalId#{resourceHash}",'PhysicalResourceId')) }
+        Output("#{resource.delete('.').delete('-').delete('::')}") { Value(FnGetAtt("GetPhysicalId#{resourceHash}",'PhysicalResourceId')) }
       end
     end
   end
