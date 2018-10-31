@@ -53,16 +53,20 @@ module CfnMonitor
       services ||= {}
       endpoints = custom_alarms_config['endpoints']
       endpoints ||= {}
-      rme = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, services: services }
+      alarm_parameters = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, services: services }
       source_bucket = custom_alarms_config['source_bucket']
 
-      rme.each do | k,v |
-        if !v.nil?
-          v.each do | resource,attributes |
-            # set environments to 'all' by default
-            environments = ['all']
-            # Support config hashs for additional parameters
-            params = {}
+      alarm_parameters.each do | k,v |
+      if !v.nil?
+        v.each do | resource,attributeList |
+          # set environments to 'all' by default
+          environments = ['all']
+          # Support config hashs for additional parameters
+          params = {}
+          if attributeList.kind_of?(Hash)
+            attributeList = [attributeList]
+          end
+          attributeList.each do | attributes |
             if attributes.kind_of?(Hash)
               attributes.each do | a,b |
                 environments = b if a == 'environments'
@@ -122,6 +126,7 @@ module CfnMonitor
           end
         end
       end
+    end
 
       # Create temp alarms file for CfnDsl
       temp_file = Tempfile.new(["alarms-",'.yml'])
