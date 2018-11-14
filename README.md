@@ -9,7 +9,7 @@ monitorable resources that can be placed into a config file. This config
 can then be used to generate a cloudformation stack to create and manage
 cloudwatch alarms.
 
-It is packaged as a docker container `base2/cfn_monitor` and
+It is packaged as a docker container `base2/cfn-monitor` and
 can be run by volume mounting in a local directory to access the config
 or by using within AWS CodePipeline.
 
