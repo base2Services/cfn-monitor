@@ -78,7 +78,7 @@ namespace :cfn do
           environments = ['all']
           # Support config hashs for additional parameters
           params = {}
-          if attributeList.kind_of?(Hash)
+          if !attributeList.kind_of?(Array)
             attributeList = [attributeList]
           end
           attributeList.each do | attributes |
