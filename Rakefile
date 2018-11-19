@@ -64,74 +64,77 @@ namespace :cfn do
     alarms = []
     resources = customer_alarms_config['resources']
     metrics = customer_alarms_config['metrics']
-    hosts = customer_alarms_config['hosts']
-    hosts ||= {}
-    services = customer_alarms_config['services']
-    services ||= {}
-    endpoints = customer_alarms_config['endpoints']
-    endpoints ||= {}
-    rme = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, services: services }
+    hosts = customer_alarms_config['hosts'] || {}
+    services = customer_alarms_config['services'] || {}
+    endpoints = customer_alarms_config['endpoints'] || {}
+
+    alarm_parameters = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, services: services }
     source_bucket = customer_alarms_config['source_bucket']
 
-    rme.each do | k,v |
+    alarm_parameters.each do | k,v |
       if !v.nil?
-        v.each do | resource,attributes |
+        v.each do | resource,attributeList |
           # set environments to 'all' by default
           environments = ['all']
           # Support config hashs for additional parameters
           params = {}
-          if attributes.kind_of?(Hash)
-            attributes.each do | a,b |
-              environments = b if a == 'environments'
-              # Convert strings to arrays for consistency
-              if !environments.kind_of?(Array) then environments = environments.split end
-              params[a] = b if !['template','environments'].member? a
-            end
-            templatesEnabled = attributes['template']
-          else
-            templatesEnabled = attributes
+          if !attributeList.kind_of?(Array)
+            attributeList = [attributeList]
           end
-          # Convert strings to arrays for looping
-          if !templatesEnabled.kind_of?(Array) then templatesEnabled = templatesEnabled.split end
-          templatesEnabled.each do | templateEnabled |
-            if !templates['templates'][templateEnabled].nil?
-              # If a template is provided, inherit that template
-              if !templates['templates'][templateEnabled]['template'].nil?
-                template_from = Marshal.load( Marshal.dump(templates['templates'][templates['templates'][templateEnabled]['template']]) )
-                template_to = templates['templates'][templateEnabled].without('template')
-                template_merged = CommonHelper.deep_merge(template_from, template_to)
-                templates['templates'][templateEnabled] = template_merged
+          attributeList.each do | attributes |
+            if attributes.kind_of?(Hash)
+              attributes.each do | a,b |
+                environments = b if a == 'environments'
+                # Convert strings to arrays for consistency
+                if !environments.kind_of?(Array) then environments = environments.split end
+                params[a] = b if !['template','environments'].member? a
               end
-              templates['templates'][templateEnabled].each do | alarm,parameters |
-                resourceParams = parameters.clone
-                # Override template params if overrides provided
-                params.each do | x,y |
-                  resourceParams[x] = y
+              templatesEnabled = attributes['template']
+            else
+              templatesEnabled = attributes
+            end
+            # Convert strings to arrays for looping
+            if !templatesEnabled.kind_of?(Array) then templatesEnabled = templatesEnabled.split end
+            templatesEnabled.each do | templateEnabled |
+              if !templates['templates'][templateEnabled].nil?
+                # If a template is provided, inherit that template
+                if !templates['templates'][templateEnabled]['template'].nil?
+                  template_from = Marshal.load( Marshal.dump(templates['templates'][templates['templates'][templateEnabled]['template']]) )
+                  template_to = templates['templates'][templateEnabled].without('template')
+                  template_merged = CommonHelper.deep_merge(template_from, template_to)
+                  templates['templates'][templateEnabled] = template_merged
                 end
-                if k == :hosts
-                  resourceParams['cmds'].each do |cmd|
-                    hostParams = resourceParams.clone
-                    hostParams['cmd'] = cmd
-                    # Construct alarm object per cmd
+                templates['templates'][templateEnabled].each do | alarm,parameters |
+                  resourceParams = parameters.clone
+                  # Override template params if overrides provided
+                  params.each do | x,y |
+                    resourceParams[x] = y
+                  end
+                  if k == :hosts
+                    resourceParams['cmds'].each do |cmd|
+                      hostParams = resourceParams.clone
+                      hostParams['cmd'] = cmd
+                      # Construct alarm object per cmd
+                      alarms << {
+                        resource: resource,
+                        type: k[0...-1],
+                        template: templateEnabled,
+                        alarm: alarm,
+                        parameters: hostParams,
+                        environments: environments
+                      }
+                    end
+                  else
+                    # Construct alarm object
                     alarms << {
                       resource: resource,
                       type: k[0...-1],
                       template: templateEnabled,
                       alarm: alarm,
-                      parameters: hostParams,
+                      parameters: resourceParams,
                       environments: environments
                     }
                   end
-                else
-                  # Construct alarm object
-                  alarms << {
-                    resource: resource,
-                    type: k[0...-1],
-                    template: templateEnabled,
-                    alarm: alarm,
-                    parameters: resourceParams,
-                    environments: environments
-                  }
                 end
               end
             end
