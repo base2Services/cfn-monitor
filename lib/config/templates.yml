@@ -399,14 +399,14 @@ templates:
       EvaluationPeriods: 5
   ApiGateway: #AWS:ApiGateway
     ApiEndpoint5xx:
-      AlarmActions: crit
+      AlarmActions: warn
       Namespace: AWS/ApiGateway
       MetricName: 5XXError
       ComparisonOperator: GreaterThanThreshold
       DimensionsName: ApiName
       Statistic: Sum
       Threshold: 5
-      EvaluationPdyneriods: 2
+      EvaluationPeriods: 2
   DynamoDBTable: #AWS::DynamoDB::Table
     DynamoDBReadUsage:
       AlarmActions: warn
