@@ -13,6 +13,12 @@ module CfnMonitor
       puts CfnMonitor::VERSION
     end
 
+    class_option :silent,
+        aliases: :s,
+        type: :boolean,
+        default: false,
+        desc: "Don't print cfndsl output"
+
     # class_option :verbose,
     #   aliases: :V,
     #   type: :boolean,
@@ -53,9 +59,9 @@ module CfnMonitor
       CfnMonitor::Query.run(options)
     end
 
-    desc "deploy", "Deploys gerenated cfn templates to S3 bucket"
+    desc "deploy", "Deploys generated cfn templates to S3 bucket"
     long_desc <<-LONG
-    Deploys gerenated cloudformation templates to the specified S3 source_bucket
+    Deploys generated cloudformation templates to the specified S3 source_bucket
     LONG
     method_option :application, aliases: :a, type: :string, desc: "application name"
     def deploy
