@@ -66,6 +66,29 @@ templates:
     #   MetricName: Failed_SSM_Agent
     #   AlarmDescription: { 'Fn::Join': [ ' ', [ Ref: 'MonitoredStack', { 'Fn::Sub': ['${resource}', {'env': { Ref: 'EnvironmentName' } } ] }, '${alarmName}' ] ] }
     #   TreatMissingData: notBreaching
+  Ssl:
+    Crit:
+      AlarmActions: crit
+      Namespace: SSL
+      ComparisonOperator: LessThanThreshold
+      Dimensions: [ { Name: 'URL', Value: { '${resource}' } } ]
+      Statistic: Maximum
+      Threshold: 30   # 30 days
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: ExpiresInDays
+      AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
+    Warn:
+      AlarmActions: warn
+      Namespace: SSL
+      ComparisonOperator: LessThanThreshold
+      Dimensions: [ { Name: 'URL', Value: { '${resource}' } } ]
+      Statistic: Maximum
+      Threshold: 60   # 60 days
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: ExpiresInDays
+      AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
   Nrpe:
     Warn:
       AlarmActions: warn

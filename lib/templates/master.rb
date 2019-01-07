@@ -64,7 +64,7 @@ CloudFormation do
     ])
   end
 
-  Resource("HttpLambdaExecutionRole") do
+  Resource("LambdaExecutionRole") do
     Type 'AWS::IAM::Role'
     Property('AssumeRolePolicyDocument', {
       Version: '2012-10-17',
@@ -128,12 +128,29 @@ CloudFormation do
     Property('MemorySize', 128)
     Property('Runtime', 'python3.6')
     Property('Timeout', 300)
-    Property('Role', FnGetAtt('HttpLambdaExecutionRole','Arn'))
+    Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
 
   Resource("HttpCheckPermissions") do
     Type 'AWS::Lambda::Permission'
     Property('FunctionName', Ref('HttpCheckFunction'))
+    Property('Action', 'lambda:InvokeFunction')
+    Property('Principal', 'events.amazonaws.com')
+  end
+
+  Resource("SslCheckFunction") do
+    Type 'AWS::Lambda::Function'
+    Property('Code', { S3Bucket: FnJoin('.',[Ref('AWS::Region'),'aws-lambda-ssl-check']), S3Key: '0.1/handler.zip' })
+    Property('Handler', 'handler.http_check')
+    Property('MemorySize', 128)
+    Property('Runtime', 'python3.6')
+    Property('Timeout', 300)
+    Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
+  end
+
+  Resource("SslCheckPermissions") do
+    Type 'AWS::Lambda::Permission'
+    Property('FunctionName', Ref('SslCheckFunction'))
     Property('Action', 'lambda:InvokeFunction')
     Property('Principal', 'events.amazonaws.com')
   end
@@ -172,6 +189,22 @@ CloudFormation do
       Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/endpoints.json")
       Property('TimeoutInMinutes', 5)
       Property('Parameters', endpointParams)
+    end
+  end
+
+  sslParams = {
+    MonitoredStack: Ref('MonitoredStack'),
+    SslCheckFunctionArn: FnGetAtt('SslCheckFunction','Arn'),
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
+  }
+
+  ssl ||= {}
+  if !ssl.empty?
+    Resource("SslStack") do
+      Type 'AWS::CloudFormation::Stack'
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/ssl.json")
+      Property('TimeoutInMinutes', 5)
+      Property('Parameters', sslParams)
     end
   end
 

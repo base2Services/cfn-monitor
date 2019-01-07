@@ -53,7 +53,7 @@ CloudFormation do
     template = alarm[:template]
     name = alarm[:alarm]
     params = alarm[:parameters]
-    cmd = params['cmd']
+    cmd = params['cmd'] || ''
 
     alarmHash = Digest::MD5.hexdigest "#{resourceGroup}#{template}#{name}#{cmd}"
 
