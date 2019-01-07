@@ -152,6 +152,15 @@ timeOut | A timeout value for the endpoint monitoring | 120 seconds
 scheduleExpression | A cron expression used to schedule the endpoint monitoring | Every minute
 environments | A string or array of environment names. Monitoring will only be deployed for these environments (if specified) | All environments
 
+#### SSL certificate age checking
+To monitor the age of an SSL certificate of a particular domain, add the following config:
+
+```YAML
+ssl:
+  https://www.base2services.com: Ssl
+```
+
+The `Ssl` template is scheduled to push a metric once every day.
 
 #### Multiple templates
 You can specify multiple templates for the resource by providing a list/array. You may want to do this if you want to deploy some custom alarms in addition to the default alarms for a resource.
