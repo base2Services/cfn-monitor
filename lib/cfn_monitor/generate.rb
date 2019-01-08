@@ -55,10 +55,11 @@ module CfnMonitor
       metrics = custom_alarms_config['metrics']
       hosts = custom_alarms_config['hosts'] || {}
       ssl = custom_alarms_config['ssl'] || {}
+      dns = custom_alarms_config['dns'] || {}
       services = custom_alarms_config['services'] || {}
       endpoints = custom_alarms_config['endpoints'] || {}
 
-      alarm_parameters = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, ssl: ssl, services: services }
+      alarm_parameters = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, ssl: ssl, dns: dns, services: services }
       source_bucket = custom_alarms_config['source_bucket']
 
       alarm_parameters.each do | k,v |
@@ -177,6 +178,8 @@ module CfnMonitor
         file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/endpoints.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],verbose_cfndsl)))}
       File.open("#{output_path}/ssl.json", 'w') { |file|
         file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/ssl.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],verbose_cfndsl)))}
+      File.open("#{output_path}/dns.json", 'w') { |file|
+        file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/dns.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],verbose_cfndsl)))}
       File.open("#{output_path}/hosts.json", 'w') { |file|
         file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/hosts.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],verbose_cfndsl)))}
       File.open("#{output_path}/services.json", 'w') { |file|

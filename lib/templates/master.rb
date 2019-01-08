@@ -155,6 +155,23 @@ CloudFormation do
     Property('Principal', 'events.amazonaws.com')
   end
 
+  Resource("DnsCheckFunction") do
+    Type 'AWS::Lambda::Function'
+    Property('Code', { S3Bucket: FnJoin('.', ['base2.lambda', Ref('AWS::Region')]), S3Key: 'aws-lambda-dns-check/0.1/handler.zip' })
+    Property('Handler', 'main.Handler')
+    Property('MemorySize', 128)
+    Property('Runtime', 'go1.x')
+    Property('Timeout', 300)
+    Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
+  end
+
+  Resource("DnsCheckPermissions") do
+    Type 'AWS::Lambda::Permission'
+    Property('FunctionName', Ref('DnsCheckFunction'))
+    Property('Action', 'lambda:InvokeFunction')
+    Property('Principal', 'events.amazonaws.com')
+  end
+
   params = {
     MonitoredStack: Ref('MonitoredStack'),
     SnsTopicCrit: Ref('SnsTopicCrit'),
@@ -205,6 +222,22 @@ CloudFormation do
       Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/ssl.json")
       Property('TimeoutInMinutes', 5)
       Property('Parameters', sslParams)
+    end
+  end
+
+  dnsParams = {
+    MonitoredStack: Ref('MonitoredStack'),
+    DnsCheckFunctionArn: FnGetAtt('DnsCheckFunction','Arn'),
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
+  }
+
+  dns ||= {}
+  if !dns.empty?
+    Resource("DnsStack") do
+      Type 'AWS::CloudFormation::Stack'
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/dns.json")
+      Property('TimeoutInMinutes', 5)
+      Property('Parameters', dnsParams)
     end
   end
 
