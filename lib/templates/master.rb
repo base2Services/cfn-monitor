@@ -140,10 +140,10 @@ CloudFormation do
 
   Resource("SslCheckFunction") do
     Type 'AWS::Lambda::Function'
-    Property('Code', { S3Bucket: FnJoin('.',[Ref('AWS::Region'),'aws-lambda-ssl-check']), S3Key: '0.1/handler.zip' })
-    Property('Handler', 'handler.http_check')
+    Property('Code', { S3Bucket: FnJoin('.', ['base2.lambda', Ref('AWS::Region')]), S3Key: 'aws-lambda-ssl-check/0.1/handler.zip' })
+    Property('Handler', 'main.Handler')
     Property('MemorySize', 128)
-    Property('Runtime', 'python3.6')
+    Property('Runtime', 'go1.x')
     Property('Timeout', 300)
     Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
