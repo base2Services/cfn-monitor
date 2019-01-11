@@ -36,7 +36,7 @@ docker run -it --rm \
   -v $HOME/.aws:/root/.aws \
   -e AWS_REGION=us-east-1 \
   -e AWS_PROFILE=default \
-  base2/cfn_monitor cfn_monitor <command> [parameters]
+  base2/cfn-monitor cfn_monitor <command> [parameters]
 ```
 
 ## Configuration files
