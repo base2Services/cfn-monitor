@@ -6,14 +6,16 @@ module CfnMonitor
 
     def self.run(options)
 
-      if !options['application']
-        raise "No application specified"
+      if options['application']
+        application = options['application']
+        custom_alarms_config_file = "#{application}/alarms.yml"
+        output_path = "output/#{application}"
+      else
+        application = File.basename(Dir.getwd)
+        custom_alarms_config_file = "alarms.yml"
+        output_path = "output"
       end
 
-      application = options['application']
-
-      custom_alarms_config_file = "#{application}/alarms.yml"
-      output_path = "output/#{application}"
       upload_path = "cloudformation/monitoring/#{application}"
 
       # Load custom config files

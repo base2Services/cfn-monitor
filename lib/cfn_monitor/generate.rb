@@ -10,17 +10,13 @@ module CfnMonitor
 
     def self.run(options)
 
-      if !options['application']
-        raise "No application specified"
-      end
-
       if options['silent']
         verbose_cfndsl = false
       else
         verbose_cfndsl = STDOUT
       end
 
-      application = options['application']
+      application = options['application'] || '.'
 
       template_path = File.join(File.dirname(__FILE__),'../config/templates.yml')
       config_path = File.join(File.dirname(__FILE__),'../config/config.yml')
