@@ -6,19 +6,23 @@ module CfnMonitor
 
     def self.run(options)
 
-      if !options['application'] || !options['stack']
-        raise "No application specified"
-      end
-
       if !options['stack']
         raise "No stack specified"
+      end
+
+      if options['application']
+        application = options['application']
+        custom_alarms_config_file = "#{application}/alarms.yml"
+      else
+        application = File.basename(Dir.getwd)
+        custom_alarms_config_file = "alarms.yml"
       end
 
       config_path = File.join(File.dirname(__FILE__),'../config/config.yml')
       # Load global config files
       config = YAML.load(File.read(config_path))
 
-      custom_alarms_config_file = "#{options['application']}/alarms.yml"
+      custom_alarms_config_file = "#{application}/alarms.yml"
 
       # Load custom config files
       custom_alarms_config = YAML.load(File.read(custom_alarms_config_file)) if File.file?(custom_alarms_config_file)
@@ -27,7 +31,7 @@ module CfnMonitor
 
       puts "-----------------------------------------------"
       puts "stack: #{options['stack']}"
-      puts "application: #{options['application']}"
+      puts "application: #{application}"
       puts "-----------------------------------------------"
       puts "Searching Stacks for Monitorable Resources"
       puts "-----------------------------------------------"
@@ -75,7 +79,7 @@ module CfnMonitor
         puts "-----------------------------------------------"
       end
       puts "Monitorable resources in #{options['stack']} stack: #{stackResourceCount}"
-      puts "Resources in #{options['application']} alarms config: #{configResourceCount}"
+      puts "Resources in #{application} alarms config: #{configResourceCount}"
       if stackResourceCount > 0
         puts "Coverage: #{100-(configResources.count*100/stackResourceCount)}%"
       end

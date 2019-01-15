@@ -10,11 +10,13 @@ module CfnMonitor
 
     def self.run(options)
 
-      if !options['application']
-        raise "No application specified"
+      if options['silent']
+        verbose_cfndsl = false
+      else
+        verbose_cfndsl = STDOUT
       end
 
-      application = options['application']
+      application = options['application'] || '.'
 
       template_path = File.join(File.dirname(__FILE__),'../config/templates.yml')
       config_path = File.join(File.dirname(__FILE__),'../config/config.yml')
@@ -48,10 +50,12 @@ module CfnMonitor
       resources = custom_alarms_config['resources']
       metrics = custom_alarms_config['metrics']
       hosts = custom_alarms_config['hosts'] || {}
+      ssl = custom_alarms_config['ssl'] || {}
+      dns = custom_alarms_config['dns'] || {}
       services = custom_alarms_config['services'] || {}
       endpoints = custom_alarms_config['endpoints'] || {}
 
-      alarm_parameters = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, services: services }
+      alarm_parameters = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, ssl: ssl, dns: dns, services: services }
       source_bucket = custom_alarms_config['source_bucket']
 
       alarm_parameters.each do | k,v |
@@ -93,6 +97,7 @@ module CfnMonitor
                     params.each do | x,y |
                       resourceParams[x] = y
                     end
+
                     if k == :hosts
                       resourceParams['cmds'].each do |cmd|
                         hostParams = resourceParams.clone
@@ -152,27 +157,29 @@ module CfnMonitor
         temp_files[i].rewind
       end
 
-      write_cfdndsl_template(temp_file_path, temp_file_paths, custom_alarms_config_file, source_bucket, template_envs, output_path, upload_path)
+      write_cfdndsl_template(alarm_parameters, temp_file_path, temp_file_paths, custom_alarms_config_file, source_bucket, template_envs, output_path, upload_path, verbose_cfndsl)
 
     end
 
-    def self.write_cfdndsl_template(alarms_config,configs,custom_alarms_config_file,source_bucket,template_envs,output_path,upload_path)
+    def self.write_cfdndsl_template(alarm_parameters,alarms_config_file,configs,custom_alarms_config_file,source_bucket,template_envs,output_path,upload_path,verbose_cfndsl)
       template_path = File.expand_path("../../templates", __FILE__)
       FileUtils::mkdir_p output_path
       configs.each_with_index do |config,index|
         File.open("#{output_path}/resources#{index}.json", 'w') { |file|
-          file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/resources.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "source_bucket='#{source_bucket}'"],[:raw, "upload_path='#{upload_path}'"]],STDOUT)))}
+          file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/resources.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "source_bucket='#{source_bucket}'"],[:raw, "upload_path='#{upload_path}'"]],verbose_cfndsl)))}
         File.open("#{output_path}/alarms#{index}.json", 'w') { |file|
-          file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/alarms.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
+          file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/alarms.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "template_envs=#{template_envs}"]],verbose_cfndsl)))}
       end
-      File.open("#{output_path}/endpoints.json", 'w') { |file|
-        file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/endpoints.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
-      File.open("#{output_path}/hosts.json", 'w') { |file|
-        file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/hosts.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
-      File.open("#{output_path}/services.json", 'w') { |file|
-        file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/services.rb",[[:yaml, alarms_config],[:raw, "template_envs=#{template_envs}"]],STDOUT)))}
+      ['endpoints', 'ssl', "dns", 'hosts', 'services'].each do |template|
+        if !alarm_parameters[template.to_sym].nil? and alarm_parameters[template.to_sym] != {}
+          File.open("#{output_path}/#{template}.json", 'w') { |file|
+            file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/#{template}.rb",[[:yaml, alarms_config_file],[:raw, "template_envs=#{template_envs}"]],verbose_cfndsl)))
+          }
+        end
+      end
+
       File.open("#{output_path}/master.json", 'w') { |file|
-        file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/master.rb",[[:yaml, custom_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"],[:raw, "upload_path='#{upload_path}'"]],STDOUT)))}
+        file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/master.rb",[[:yaml, custom_alarms_config_file],[:raw, "templateCount=#{configs.count}"],[:raw, "template_envs=#{template_envs}"],[:raw, "upload_path='#{upload_path}'"]],verbose_cfndsl)))}
     end
 
     def self.get_alarm_envs(params)
