@@ -141,7 +141,7 @@ CloudFormation do
   Resource("SslCheckFunction") do
     Type 'AWS::Lambda::Function'
     Property('Code', { S3Bucket: FnJoin('.', ['base2.lambda', Ref('AWS::Region')]), S3Key: 'aws-lambda-ssl-check/0.1/handler.zip' })
-    Property('Handler', 'main.Handler')
+    Property('Handler', 'main')
     Property('MemorySize', 128)
     Property('Runtime', 'go1.x')
     Property('Timeout', 300)
@@ -158,7 +158,7 @@ CloudFormation do
   Resource("DnsCheckFunction") do
     Type 'AWS::Lambda::Function'
     Property('Code', { S3Bucket: FnJoin('.', ['base2.lambda', Ref('AWS::Region')]), S3Key: 'aws-lambda-dns-check/0.1/handler.zip' })
-    Property('Handler', 'main.Handler')
+    Property('Handler', 'main')
     Property('MemorySize', 128)
     Property('Runtime', 'go1.x')
     Property('Timeout', 300)

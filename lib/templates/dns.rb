@@ -14,7 +14,7 @@ CloudFormation do
   }
 
   alarms.each do |alarm|
-    if alarm[:type] == 'ss'
+    if alarm[:type] == 'dn'
       endpointHash =  Digest::MD5.hexdigest "dns-" + alarm[:resource]
 
       # Conditionally create shedule based on environments attribute
