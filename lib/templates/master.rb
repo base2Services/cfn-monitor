@@ -123,8 +123,8 @@ CloudFormation do
 
   Resource("HttpCheckFunction") do
     Type 'AWS::Lambda::Function'
-    Property('Code', { S3Bucket: FnJoin('.',[Ref('AWS::Region'),'aws-lambda-http-check']), S3Key: 'httpCheck-v2.zip' })
-    Property('Handler', 'handler.http_check')
+    Property('Code', { S3Bucket: FnJoin('.', ['base2.lambda', Ref('AWS::Region')]), S3Key: 'aws-lambda-http-check/0.1/handler.zip' })
+    Property('Handler', 'handler.main')
     Property('MemorySize', 128)
     Property('Runtime', 'python3.6')
     Property('Timeout', 300)
