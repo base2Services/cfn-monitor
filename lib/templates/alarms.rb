@@ -104,7 +104,7 @@ CloudFormation do
     conditions = []
 
     # Configure resource parameters
-    if type == 'resource'
+    if ['resource','ecsCluster'].include? type
       # Configure physical resource inputs
       dimensionsNames = params['DimensionsName'].split('/')
       dimensions = []

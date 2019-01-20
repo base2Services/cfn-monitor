@@ -1,4 +1,15 @@
 templates:
+  EcsCICheck:
+    ECSContianerInstancesDisconnected:
+      AlarmActions: crit
+      Namespace: EcsCICheck
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: Cluster
+      Statistic: Maximum
+      Threshold: 0
+      Period: 60
+      EvaluationPeriods: 2
+      MetricName: ECSContianerInstancesDisconnected
   HttpCheck:
     EndpointAvailable:
       AlarmActions: crit
