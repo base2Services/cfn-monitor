@@ -10,6 +10,7 @@ templates:
       Period: 60
       EvaluationPeriods: 2
       MetricName: ECSContianerInstancesDisconnected
+      TreatMissingData: notBreaching
   HttpCheck:
     EndpointAvailable:
       AlarmActions: crit
