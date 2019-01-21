@@ -64,6 +64,40 @@ CloudFormation do
     ])
   end
 
+  Resource("EcsCICheckLambdaExecutionRole") do
+    Type 'AWS::IAM::Role'
+    Property('AssumeRolePolicyDocument', {
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Principal: { Service: [ 'lambda.amazonaws.com' ] },
+        Action: [ 'sts:AssumeRole' ]
+      }]
+    })
+    Property('Path','/')
+    Property('Policies', [
+      PolicyName: 'CloudFormationReadOnly',
+      PolicyDocument: {
+        Version: '2012-10-17',
+        Statement: [{
+          Effect: 'Allow',
+          Action: [ 'logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents' ],
+          Resource: 'arn:aws:logs:*:*:*'
+        },
+        {
+          Effect: 'Allow',
+          Action: [ 'ecs:ListContainerInstances', 'ecs:DescribeContainerInstances' ],
+          Resource: '*'
+        },
+        {
+          Effect: 'Allow',
+          Action: [ 'cloudwatch:PutMetricData' ],
+          Resource: '*'
+        }]
+      }
+    ])
+  end
+
   Resource("LambdaExecutionRole") do
     Type 'AWS::IAM::Role'
     Property('AssumeRolePolicyDocument', {
@@ -172,6 +206,23 @@ CloudFormation do
     Property('Principal', 'events.amazonaws.com')
   end
 
+  Resource("EcsCICheckFunction") do
+    Type 'AWS::Lambda::Function'
+    Property('Code', { S3Bucket: FnJoin('.', ['base2.lambda', Ref('AWS::Region')]), S3Key: 'aws-lambda-ecs-container-instance-check/0.1/handler.zip' })
+    Property('Handler', 'handler.run_check')
+    Property('MemorySize', 128)
+    Property('Runtime', 'python3.6')
+    Property('Timeout', 300)
+    Property('Role', FnGetAtt('EcsCICheckLambdaExecutionRole','Arn'))
+  end
+
+  Resource("EcsCICheckPermissions") do
+    Type 'AWS::Lambda::Permission'
+    Property('FunctionName', Ref('EcsCICheckFunction'))
+    Property('Action', 'lambda:InvokeFunction')
+    Property('Principal', 'events.amazonaws.com')
+  end
+
   params = {
     MonitoredStack: Ref('MonitoredStack'),
     SnsTopicCrit: Ref('SnsTopicCrit'),
@@ -266,6 +317,24 @@ CloudFormation do
       Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/services.json")
       Property('TimeoutInMinutes', 5)
       Property('Parameters', servicesParams)
+    end
+  end
+
+  ecsClusterParams = {
+    MonitoredStack: Ref('MonitoredStack'),
+    GetPhysicalIdFunctionArn: FnGetAtt('GetPhysicalIdFunction','Arn'),
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' ),
+    ConfigToggle: Ref('ConfigToggle'),
+    EcsCICheckFunctionArn: FnGetAtt('EcsCICheckFunction','Arn')
+  }
+
+  ecsClusters ||= {}
+  if !ecsClusters.empty?
+    Resource("ServicesStack") do
+      Type 'AWS::CloudFormation::Stack'
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/ecsClusters.json")
+      Property('TimeoutInMinutes', 5)
+      Property('Parameters', ecsClusterParams)
     end
   end
 

@@ -44,9 +44,12 @@ module CfnMonitor
     Generates CloudFormation templates from the alarm configuration and output to the output/ directory.
     LONG
     method_option :application, aliases: :a, type: :string, desc: "application name"
-    # method_option :validate, aliases: :v, type: :boolean, default: true, desc: "validate cfn templates"
+    method_option :validate, aliases: :v, type: :boolean, default: false, desc: "validate cfn templates"
     def generate
       CfnMonitor::Generate.run(options)
+      if options['validate']
+        CfnMonitor::Validate.run(options)
+      end
     end
 
     desc "query", "Queries a CloudFormation stack for monitorable resources"

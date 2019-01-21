@@ -54,8 +54,9 @@ module CfnMonitor
       dns = custom_alarms_config['dns'] || {}
       services = custom_alarms_config['services'] || {}
       endpoints = custom_alarms_config['endpoints'] || {}
+      ecsClusters = custom_alarms_config['ecsClusters'] || {}
 
-      alarm_parameters = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, ssl: ssl, dns: dns, services: services }
+      alarm_parameters = { resources: resources, metrics: metrics, endpoints: endpoints, hosts: hosts, ssl: ssl, dns: dns, services: services, ecsClusters: ecsClusters }
       source_bucket = custom_alarms_config['source_bucket']
 
       alarm_parameters.each do | k,v |
@@ -170,7 +171,7 @@ module CfnMonitor
         File.open("#{output_path}/alarms#{index}.json", 'w') { |file|
           file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/alarms.rb",[[:yaml, config],[:raw, "template_number=#{index}"],[:raw, "template_envs=#{template_envs}"]],verbose_cfndsl)))}
       end
-      ['endpoints', 'ssl', "dns", 'hosts', 'services'].each do |template|
+      ['endpoints', 'ssl', "dns", 'hosts', 'services','ecsClusters'].each do |template|
         if !alarm_parameters[template.to_sym].nil? and alarm_parameters[template.to_sym] != {}
           File.open("#{output_path}/#{template}.json", 'w') { |file|
             file.write(JSON.pretty_generate( CfnDsl.eval_file_with_extras("#{template_path}/#{template}.rb",[[:yaml, alarms_config_file],[:raw, "template_envs=#{template_envs}"]],verbose_cfndsl)))
