@@ -16,18 +16,27 @@ module CfnMonitor
         verbose_cfndsl = STDOUT
       end
 
-      application = options['application'] || '.'
+      if options['application']
+        application = options['application']
+        custom_alarms_config_file = "#{application}/alarms.yml"
+        custom_templates_config_file = "#{application}/templates.yml"
+        output_path = "output/#{application}"
+      else
+        application = File.basename(Dir.getwd)
+        custom_alarms_config_file = "alarms.yml"
+        custom_templates_config_file = "templates.yml"
+        output_path = "output"
+      end
+
+      upload_path = "cloudformation/monitoring/#{application}"
+
+      application = File.basename(Dir.getwd)
 
       template_path = File.join(File.dirname(__FILE__),'../config/templates.yml')
       config_path = File.join(File.dirname(__FILE__),'../config/config.yml')
       # Load global config files
       global_templates_config = YAML.load(File.read(template_path))
       config = YAML.load(File.read(config_path))
-
-      custom_alarms_config_file = "#{application}/alarms.yml"
-      custom_templates_config_file = "#{application}/templates.yml"
-      output_path = "output/#{application}"
-      upload_path = "cloudformation/monitoring/#{application}"
 
       # Load custom config files
       if File.file?(custom_alarms_config_file)
