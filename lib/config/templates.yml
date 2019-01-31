@@ -484,3 +484,98 @@ templates:
       Statistic: Sum
       Threshold: 80
       EvaluationPeriods: 2
+  ElasticLoadBalancerSingleInstance: # AWS::ElasticLoadBalancing::LoadBalancer
+    HealthyHosts:
+      AlarmActions: crit
+      Namespace: AWS/ELB
+      MetricName: HealthyHostCount
+      ComparisonOperator: LessThanThreshold
+      DimensionsName: LoadBalancerName
+      Statistic: Minimum
+      Threshold: 1
+      Threshold.development: 1
+      EvaluationPeriods: 1
+      TreatMissingData: notBreaching
+    UnHealthyHosts:
+      AlarmActions: warn
+      Namespace: AWS/ELB
+      MetricName: UnHealthyHostCount
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: LoadBalancerName
+      Statistic: Maximum
+      Threshold: 0
+      EvaluationPeriods: 10
+      TreatMissingData: notBreaching
+  # Custom metric checks. The dimensions are configured in the CloudWatch agent's config on the instance.
+  DiskSpaceCheck:
+    CritLowDiskSpaceRootPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'path', Value: '/' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvda1' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 85   # Percentage used
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: DiskSpaceUsedPercent
+      TreatMissingData: breaching
+
+    WarnLowDiskSpaceRootPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'path', Value: '/' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvda1' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 75   # Percentage used
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: DiskSpaceUsedPercent
+      TreatMissingData: breaching
+
+    CritLowDiskSpaceDataPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'path', Value: '/data' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdf' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 85   # Percentage used
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: DiskSpaceUsedPercent
+      TreatMissingData: breaching
+
+    WarnLowDiskSpaceDataPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'path', Value: '/data' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdf' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 75   # Percentage used
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: DiskSpaceUsedPercent
+      TreatMissingData: breaching
+
+    CritLowDiskSpaceDockerPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'path', Value: '/var/lib/docker' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdcz' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 85   # Percentage used
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: DiskSpaceUsedPercent
+      TreatMissingData: breaching
+
+    WarnLowDiskSpaceDockerPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'path', Value: '/var/lib/docker' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdcz' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 75   # Percentage used
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: DiskSpaceUsedPercent
+      TreatMissingData: breaching
