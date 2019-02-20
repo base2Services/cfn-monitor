@@ -12,3 +12,4 @@ resource_defaults:
   AWS::Redshift::Cluster: RedshiftCluster
   AWS::DynamoDB::Table: DynamoDBTable
   AWS::ApiGateway::RestApi: ApiGateway
+  AWS::AmazonMQ::Broker: AmazonMQBroker

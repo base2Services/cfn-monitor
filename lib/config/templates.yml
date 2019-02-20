@@ -506,6 +506,7 @@ templates:
       Threshold: 0
       EvaluationPeriods: 10
       TreatMissingData: notBreaching
+
   # Custom metric checks. The dimensions are configured in the CloudWatch agent's config on the instance.
   DiskSpaceCheck:
     CritLowDiskSpaceRootPath:
@@ -519,7 +520,6 @@ templates:
       EvaluationPeriods: 1
       MetricName: DiskSpaceUsedPercent
       TreatMissingData: breaching
-
     WarnLowDiskSpaceRootPath:
       AlarmActions: warn
       Namespace: CWAgent
@@ -531,7 +531,6 @@ templates:
       EvaluationPeriods: 1
       MetricName: DiskSpaceUsedPercent
       TreatMissingData: breaching
-
     CritLowDiskSpaceDataPath:
       AlarmActions: crit
       Namespace: CWAgent
@@ -543,7 +542,6 @@ templates:
       EvaluationPeriods: 1
       MetricName: DiskSpaceUsedPercent
       TreatMissingData: breaching
-
     WarnLowDiskSpaceDataPath:
       AlarmActions: warn
       Namespace: CWAgent
@@ -555,7 +553,6 @@ templates:
       EvaluationPeriods: 1
       MetricName: DiskSpaceUsedPercent
       TreatMissingData: breaching
-
     CritLowDiskSpaceDockerPath:
       AlarmActions: crit
       Namespace: CWAgent
@@ -567,7 +564,6 @@ templates:
       EvaluationPeriods: 1
       MetricName: DiskSpaceUsedPercent
       TreatMissingData: breaching
-
     WarnLowDiskSpaceDockerPath:
       AlarmActions: warn
       Namespace: CWAgent
@@ -579,3 +575,47 @@ templates:
       EvaluationPeriods: 1
       MetricName: DiskSpaceUsedPercent
       TreatMissingData: breaching
+
+  AmazonMQBroker: # AWS::AmazonMQ::Broker
+    CpuCreditBalanceCrit:
+      AlarmActions: crit
+      Namespace: AWS/AmazonMQ
+      MetricName: CpuCreditBalance
+      ComparisonOperator: LessThanThreshold
+      Dimensions: [ { Name: 'Broker', Value: "${metric}" } ]
+      Statistic: Minimum
+      Threshold: 15
+      EvaluationPeriods: 1
+      TreatMissingData: notBreaching
+    CpuCreditBalanceWarn:
+      AlarmActions: warn
+      Namespace: AWS/AmazonMQ
+      MetricName: CpuCreditBalance
+      ComparisonOperator: LessThanThreshold
+      Dimensions: [ { Name: 'Broker', Value: "${metric}" } ]
+      Statistic: Minimum
+      Threshold: 30
+      EvaluationPeriods: 1
+      TreatMissingData: notBreaching
+    CpuUtilizationCrit:
+      AlarmActions: crit
+      Namespace: AWS/AmazonMQ
+      MetricName: CpuUtilization
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'Broker', Value: "${metric}" } ]
+      Statistic: Maximum
+      Threshold: 95
+      Period: 60
+      EvaluationPeriods: 3
+      TreatMissingData: notBreaching
+    CpuUtilizationWarn:
+      AlarmActions: warn
+      Namespace: AWS/AmazonMQ
+      MetricName: CpuUtilization
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions: [ { Name: 'Broker', Value: "${metric}" } ]
+      Statistic: Maximum
+      Threshold: 80
+      Period: 60
+      EvaluationPeriods: 3
+      TreatMissingData: notBreaching
