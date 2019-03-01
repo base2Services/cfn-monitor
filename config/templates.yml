@@ -411,18 +411,18 @@ templates:
     DynamoDBReadUsage:
       AlarmActions: warn
       Namespace: AWS/DynamoDB
-      MetricName: ConsumedReadCapacityUnits
-      ComparisonOperator: GreaterThanThreshold
+      MetricName: ReadThrottleEvents
+      ComparisonOperator: GreaterThanOrEqualToThreshold
       DimensionsName: TableName
       Statistic: Sum
-      Threshold: 80
+      Threshold: 1
       EvaluationPeriods: 2
     DynamoDBWriteUsage:
       AlarmActions: warn
       Namespace: AWS/DynamoDB
-      MetricName: ConsumedWriteCapacityUnits
-      ComparisonOperator: GreaterThanThreshold
+      MetricName: WriteThrottleEvents
+      ComparisonOperator: GreaterThanOrEqualToThreshold
       DimensionsName: TableName
       Statistic: Sum
-      Threshold: 80
+      Threshold: 1
       EvaluationPeriods: 2
