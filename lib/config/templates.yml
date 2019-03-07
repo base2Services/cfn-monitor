@@ -498,6 +498,24 @@ templates:
       Statistic: Sum
       Threshold: 80
       EvaluationPeriods: 2
+    DynamoDBReadThrottleEvents:
+      AlarmActions: warn
+      Namespace: AWS/DynamoDB
+      MetricName: ReadThrottleEvents
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DimensionsName: TableName
+      Statistic: Sum
+      Threshold: 1
+      EvaluationPeriods: 2
+    DynamoDBWriteThrottleEvents:
+      AlarmActions: warn
+      Namespace: AWS/DynamoDB
+      MetricName: WriteThrottleEvents
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      DimensionsName: TableName
+      Statistic: Sum
+      Threshold: 1
+      EvaluationPeriods: 2
   ElasticLoadBalancerSingleInstance: # AWS::ElasticLoadBalancing::LoadBalancer
     HealthyHosts:
       AlarmActions: crit
