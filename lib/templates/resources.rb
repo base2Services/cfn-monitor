@@ -15,6 +15,9 @@ CloudFormation do
   Parameter("SnsTopicTask"){
     Type 'String'
   }
+  Parameter("SnsTopicSlack"){
+    Type 'String'
+  }
   Parameter("MonitoringDisabled"){
     Type 'String'
   }
@@ -66,6 +69,7 @@ CloudFormation do
     SnsTopicCrit: Ref('SnsTopicCrit'),
     SnsTopicWarn: Ref('SnsTopicWarn'),
     SnsTopicTask: Ref('SnsTopicTask'),
+    SnsTopicSlack: Ref('SnsTopicSlack'),
     MonitoringDisabled: Ref('MonitoringDisabled'),
     EnvironmentType: Ref('EnvironmentType'),
     EnvironmentName: Ref('EnvironmentName')
