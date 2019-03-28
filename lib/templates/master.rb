@@ -19,6 +19,9 @@ CloudFormation do
   Parameter("SnsTopicTask"){
     Type 'String'
   }
+  Parameter("SnsTopicInfo"){
+    Type 'String'
+  }
   Parameter("MonitoringDisabled"){
     Type 'String'
     Default false
@@ -228,6 +231,7 @@ CloudFormation do
     SnsTopicCrit: Ref('SnsTopicCrit'),
     SnsTopicWarn: Ref('SnsTopicWarn'),
     SnsTopicTask: Ref('SnsTopicTask'),
+    SnsTopicInfo: Ref('SnsTopicInfo'),
     MonitoringDisabled: Ref('MonitoringDisabled'),
     EnvironmentType: Ref('EnvironmentType'),
     GetPhysicalIdFunctionArn: FnGetAtt('GetPhysicalIdFunction','Arn'),

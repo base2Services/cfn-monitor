@@ -16,6 +16,9 @@ CloudFormation do
   Parameter("SnsTopicTask"){
     Type 'String'
   }
+  Parameter("SnsTopicInfo"){
+    Type 'String'
+  }
   Parameter("MonitoringDisabled"){
     Type 'String'
   }
@@ -30,11 +33,13 @@ CloudFormation do
   Condition('CritSNS', FnNot(FnEquals(Ref("SnsTopicCrit"),'')))
   Condition('WarnSNS', FnNot(FnEquals(Ref("SnsTopicWarn"),'')))
   Condition('TaskSNS', FnNot(FnEquals(Ref("SnsTopicTask"),'')))
+  Condition('InfoSNS', FnNot(FnEquals(Ref("SnsTopicInfo"),'')))
 
   actionsEnabledMap = {
     crit: FnIf('CritSNS',[ Ref('SnsTopicCrit') ], [ ]),
     warn: FnIf('WarnSNS',[ Ref('SnsTopicWarn') ], [ ]),
-    task: FnIf('TaskSNS',[ Ref('SnsTopicTask') ], [ ])
+    task: FnIf('TaskSNS',[ Ref('SnsTopicTask') ], [ ]),
+    info: FnIf('InfoSNS',[ Ref('SnsTopicInfo') ], [ ]),
   }
 
   alarms.each do |alarm|
