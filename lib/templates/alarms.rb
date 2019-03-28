@@ -167,12 +167,13 @@ CloudFormation do
       Property('EvaluateLowSampleCountPercentile', params['EvaluateLowSampleCountPercentile']) unless params['EvaluateLowSampleCountPercentile'].nil?
       Property('EvaluationPeriods', FnFindInMap("#{alarmHash}",'EvaluationPeriods',Ref('EnvironmentType')))
       Property('ExtendedStatistic', params['ExtendedStatistic']) unless params['ExtendedStatistic'].nil?
+      Property('DatapointsToAlarm', params['DatapointsToAlarm']) unless params['DatapointsToAlarm'].nil?
       Property('InsufficientDataActions', insufficientDataActions)
       Property('MetricName', FnFindInMap("#{alarmHash}",'MetricName',Ref('EnvironmentType')))
       Property('Namespace', FnFindInMap("#{alarmHash}",'Namespace',Ref('EnvironmentType')))
       Property('OKActions', oKActions)
       Property('Period', FnFindInMap("#{alarmHash}",'Period',Ref('EnvironmentType')))
-      Property('Statistic', FnFindInMap("#{alarmHash}",'Statistic',Ref('EnvironmentType')))
+      Property('Statistic', FnFindInMap("#{alarmHash}",'Statistic',Ref('EnvironmentType'))) unless !params['ExtendedStatistic'].nil?
       Property('Threshold', FnFindInMap("#{alarmHash}",'Threshold',Ref('EnvironmentType')))
       Property('TreatMissingData',FnFindInMap("#{alarmHash}",'TreatMissingData',Ref('EnvironmentType')))
       Property('Unit', params['Unit']) unless params['Unit'].nil?
