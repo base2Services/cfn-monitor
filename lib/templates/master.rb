@@ -292,6 +292,21 @@ CloudFormation do
     end
   end
 
+  sqlParams = {
+    MonitoredStack: Ref('MonitoredStack'),
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
+  }
+
+  sql ||= {}
+  if !sql.empty?
+    Resource("SqlStack") do
+      Type 'AWS::CloudFormation::Stack'
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/sql.json")
+      Property('TimeoutInMinutes', 5)
+      Property('Parameters', sqlParams)
+    end
+  end
+
   hostParams = {
     EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
   }
