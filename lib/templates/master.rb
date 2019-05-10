@@ -164,7 +164,7 @@ CloudFormation do
     Property('Handler', 'handler.main')
     Property('MemorySize', 128)
     Property('Runtime', 'python3.6')
-    Property('Timeout', 300)
+    Property('Timeout', 120)
     Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
 
@@ -181,7 +181,7 @@ CloudFormation do
     Property('Handler', 'main')
     Property('MemorySize', 128)
     Property('Runtime', 'go1.x')
-    Property('Timeout', 300)
+    Property('Timeout', 30)
     Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
 
@@ -198,7 +198,7 @@ CloudFormation do
     Property('Handler', 'main')
     Property('MemorySize', 128)
     Property('Runtime', 'go1.x')
-    Property('Timeout', 300)
+    Property('Timeout', 30)
     Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
 
@@ -215,7 +215,7 @@ CloudFormation do
     Property('Handler', 'handler.run_check')
     Property('MemorySize', 128)
     Property('Runtime', 'python3.6')
-    Property('Timeout', 300)
+    Property('Timeout', 30)
     Property('Role', FnGetAtt('EcsCICheckLambdaExecutionRole','Arn'))
   end
 
