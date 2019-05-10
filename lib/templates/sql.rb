@@ -68,7 +68,7 @@ CloudFormation do
         Property('Timeout', 300)
         Property('Role', FnGetAtt("SqlLambdaExecutionRole",'Arn'))
         Property('VpcConfig', {
-          SecurityGroupIds: [ Ref("SqlSecurityGroup#{configHash}") ],
+          SecurityGroupIds: config['securityGroupIds'] || [  Ref("SqlSecurityGroup#{configHash}") ],
           SubnetIds: config['subnetIds']
         })
       end
