@@ -40,6 +40,7 @@ CloudFormation do
     warn: FnIf('WarnSNS',[ Ref('SnsTopicWarn') ], [ ]),
     task: FnIf('TaskSNS',[ Ref('SnsTopicTask') ], [ ]),
     info: FnIf('InfoSNS',[ Ref('SnsTopicInfo') ], [ ]),
+    none: nil,
   }
 
   alarms.each do |alarm|
@@ -160,7 +161,7 @@ CloudFormation do
       Condition "Condition#{alarmHash}" if conditions.length > 0
       Type('AWS::CloudWatch::Alarm')
       Property('ActionsEnabled', FnIf('MonitoringDisabled', false, FnFindInMap("#{alarmHash}",'ActionsEnabled',Ref('EnvironmentType'))))
-      Property('AlarmActions', alarmActions)
+      Property('AlarmActions', alarmActions) unless alarmActions.nil?
       Property('AlarmDescription', params['AlarmDescription'])
       Property('ComparisonOperator', FnFindInMap("#{alarmHash}",'ComparisonOperator',Ref('EnvironmentType')))
       Property('Dimensions', params['Dimensions'])
@@ -168,10 +169,10 @@ CloudFormation do
       Property('EvaluationPeriods', FnFindInMap("#{alarmHash}",'EvaluationPeriods',Ref('EnvironmentType')))
       Property('ExtendedStatistic', params['ExtendedStatistic']) unless params['ExtendedStatistic'].nil?
       Property('DatapointsToAlarm', params['DatapointsToAlarm']) unless params['DatapointsToAlarm'].nil?
-      Property('InsufficientDataActions', insufficientDataActions)
+      Property('InsufficientDataActions', insufficientDataActions) unless insufficientDataActions.nil?
       Property('MetricName', FnFindInMap("#{alarmHash}",'MetricName',Ref('EnvironmentType')))
       Property('Namespace', FnFindInMap("#{alarmHash}",'Namespace',Ref('EnvironmentType')))
-      Property('OKActions', oKActions)
+      Property('OKActions', oKActions) unless oKActions.nil?
       Property('Period', FnFindInMap("#{alarmHash}",'Period',Ref('EnvironmentType')))
       Property('Statistic', FnFindInMap("#{alarmHash}",'Statistic',Ref('EnvironmentType'))) unless !params['ExtendedStatistic'].nil?
       Property('Threshold', FnFindInMap("#{alarmHash}",'Threshold',Ref('EnvironmentType')))
