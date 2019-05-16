@@ -40,6 +40,7 @@ CloudFormation do
     warn: FnIf('WarnSNS',[ Ref('SnsTopicWarn') ], [ ]),
     task: FnIf('TaskSNS',[ Ref('SnsTopicTask') ], [ ]),
     info: FnIf('InfoSNS',[ Ref('SnsTopicInfo') ], [ ]),
+    none: nil,
   }
 
   alarms.each do |alarm|
@@ -88,7 +89,7 @@ CloudFormation do
 
     if !params['InsufficientDataActions'].nil?
       insufficientDataActions = actionsEnabledMap[ params['InsufficientDataActions'].downcase.to_sym ]
-    elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task
+    elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task || params['InsufficientDataAction'].downcase.to_sym == :none
       insufficientDataActions = []
     elsif !params['AlarmActions'].nil?
       insufficientDataActions = actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ]
@@ -98,7 +99,7 @@ CloudFormation do
 
     if !params['OKActions'].nil?
       oKActions = actionsEnabledMap[ params['OKActions'].downcase.to_sym ]
-    elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task
+    elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task || params['OKActions'].downcase.to_sym == :none
       oKActions = []
     elsif !params['AlarmActions'].nil?
       oKActions = actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ]
