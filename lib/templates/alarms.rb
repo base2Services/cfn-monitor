@@ -89,7 +89,7 @@ CloudFormation do
 
     if !params['InsufficientDataActions'].nil?
       insufficientDataActions = actionsEnabledMap[ params['InsufficientDataActions'].downcase.to_sym ]
-    elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task
+    elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task || params['InsufficientDataAction'].downcase.to_sym == :none
       insufficientDataActions = []
     elsif !params['AlarmActions'].nil?
       insufficientDataActions = actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ]
@@ -99,7 +99,7 @@ CloudFormation do
 
     if !params['OKActions'].nil?
       oKActions = actionsEnabledMap[ params['OKActions'].downcase.to_sym ]
-    elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task
+    elsif !params['AlarmActions'].nil? && params['AlarmActions'].downcase.to_sym == :task || params['OKActions'].downcase.to_sym == :none
       oKActions = []
     elsif !params['AlarmActions'].nil?
       oKActions = actionsEnabledMap[ params['AlarmActions'].downcase.to_sym ]
@@ -161,7 +161,7 @@ CloudFormation do
       Condition "Condition#{alarmHash}" if conditions.length > 0
       Type('AWS::CloudWatch::Alarm')
       Property('ActionsEnabled', FnIf('MonitoringDisabled', false, FnFindInMap("#{alarmHash}",'ActionsEnabled',Ref('EnvironmentType'))))
-      Property('AlarmActions', alarmActions) unless alarmActions.nil?
+      Property('AlarmActions', alarmActions)
       Property('AlarmDescription', params['AlarmDescription'])
       Property('ComparisonOperator', FnFindInMap("#{alarmHash}",'ComparisonOperator',Ref('EnvironmentType')))
       Property('Dimensions', params['Dimensions'])
@@ -169,10 +169,10 @@ CloudFormation do
       Property('EvaluationPeriods', FnFindInMap("#{alarmHash}",'EvaluationPeriods',Ref('EnvironmentType')))
       Property('ExtendedStatistic', params['ExtendedStatistic']) unless params['ExtendedStatistic'].nil?
       Property('DatapointsToAlarm', params['DatapointsToAlarm']) unless params['DatapointsToAlarm'].nil?
-      Property('InsufficientDataActions', insufficientDataActions) unless insufficientDataActions.nil?
+      Property('InsufficientDataActions', insufficientDataActions)
       Property('MetricName', FnFindInMap("#{alarmHash}",'MetricName',Ref('EnvironmentType')))
       Property('Namespace', FnFindInMap("#{alarmHash}",'Namespace',Ref('EnvironmentType')))
-      Property('OKActions', oKActions) unless oKActions.nil?
+      Property('OKActions', oKActions)
       Property('Period', FnFindInMap("#{alarmHash}",'Period',Ref('EnvironmentType')))
       Property('Statistic', FnFindInMap("#{alarmHash}",'Statistic',Ref('EnvironmentType'))) unless !params['ExtendedStatistic'].nil?
       Property('Threshold', FnFindInMap("#{alarmHash}",'Threshold',Ref('EnvironmentType')))
