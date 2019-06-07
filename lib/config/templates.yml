@@ -465,6 +465,24 @@ templates:
       Statistic: Sum
       Threshold: 5
       EvaluationPeriods: 2
+    ApiEndpoint4xx:
+      AlarmActions: warn
+      Namespace: AWS/ApiGateway
+      MetricName: 4XXError
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ApiName
+      Statistic: Sum
+      Threshold: 5
+      EvaluationPeriods: 2
+    Latency:
+      AlarmActions: warn
+      Namespace: AWS/ApiGateway
+      MetricName: Latency
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: ApiName
+      Statistic: Average
+      Threshold: 5
+      EvaluationPeriods: 2
   DynamoDBTable: #AWS::DynamoDB::Table
     DynamoDBReadUsage:
       AlarmActions: warn
@@ -637,3 +655,115 @@ templates:
       Period: 60
       EvaluationPeriods: 3
       TreatMissingData: notBreaching
+  SQSQueue:
+    ApproximateAgeOfOldestMessage:
+      AlarmActions: crit
+      Namespace: AWS/SQS
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: QueueName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: ApproximateAgeOfOldestMessage
+      TreatMissingData: Breaching
+    ApproximateNumberOfMessagesVisible:
+      AlarmActions: crit
+      Namespace: AWS/SQS
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: QueueName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: ApproximateNumberOfMessagesVisible
+      TreatMissingData: Breaching
+  LambdaFunction: #AWS::Lambda::Function
+    Errors:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: Errors
+      TreatMissingData: notBreaching
+    Throttles:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: Throttles
+      TreatMissingData: notBreaching
+    DeadLetterErrors:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: DeadLetterErrors
+      TreatMissingData: notBreaching
+  LambdaFunctionIteratorAge:
+    IteratorAge:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 600000
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: IteratorAge
+      TreatMissingData: notBreaching
+  LambdaFunctionDuration:
+    Duration:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 30
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: Duration
+      TreatMissingData: notBreaching
+  CloudFrontDistribution:
+    4xxErrorRate:
+      AlarmActions: warn
+      Namespace: AWS/CloudFront
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DistributionId
+      Statistic: Sum
+      Threshold: 5
+      EvaluationPeriods: 2
+      MetricName: 4xxErrorRate
+      TreatMissingData: Breaching
+    5xxErrorRate:
+      AlarmActions: warn
+      Namespace: AWS/CloudFront
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DistributionId
+      Statistic: Average
+      Threshold: 5
+      EvaluationPeriods: 2
+      MetricName: 5xxErrorRate
+      TreatMissingData: Breaching
+    TotalErrorRate:
+      AlarmActions: warn
+      Namespace: AWS/CloudFront
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DistributionId
+      Statistic: Average
+      Threshold: 5
+      EvaluationPeriods: 5
+      MetricName: TotalErrorRate
+      TreatMissingData: Breaching
