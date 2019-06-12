@@ -461,7 +461,8 @@ templates:
       Namespace: AWS/ApiGateway
       MetricName: 5XXError
       ComparisonOperator: GreaterThanThreshold
-      DimensionsName: ApiName
+      #DimensionsName: ApiName
+      Dimensions: [ { Name: 'ApiName', Value: '${name}' }]
       Statistic: Sum
       Threshold: 5
       EvaluationPeriods: 2
@@ -470,7 +471,8 @@ templates:
       Namespace: AWS/ApiGateway
       MetricName: 4XXError
       ComparisonOperator: GreaterThanThreshold
-      DimensionsName: ApiName
+      #DimensionsName: ApiName
+      Dimensions: [ { Name: 'ApiName', Value: '${name}' }]
       Statistic: Sum
       Threshold: 5
       EvaluationPeriods: 2
@@ -479,7 +481,8 @@ templates:
       Namespace: AWS/ApiGateway
       MetricName: Latency
       ComparisonOperator: GreaterThanThreshold
-      DimensionsName: ApiName
+      #DimensionsName: ApiName
+      Dimensions: [ { Name: 'ApiName', Value: '${name}' }]
       Statistic: Average
       Threshold: 5
       EvaluationPeriods: 2
@@ -666,7 +669,7 @@ templates:
       Period: 60
       EvaluationPeriods: 5
       MetricName: ApproximateAgeOfOldestMessage
-      TreatMissingData: Breaching
+      TreatMissingData: breaching
     ApproximateNumberOfMessagesVisible:
       AlarmActions: crit
       Namespace: AWS/SQS
@@ -677,19 +680,8 @@ templates:
       Period: 60
       EvaluationPeriods: 5
       MetricName: ApproximateNumberOfMessagesVisible
-      TreatMissingData: Breaching
+      TreatMissingData: breaching
   LambdaFunction: #AWS::Lambda::Function
-    Errors:
-      AlarmActions: crit
-      Namespace: AWS/Lambda
-      ComparisonOperator: GreaterThanThreshold
-      DimensionsName: FunctionName
-      Statistic: Average
-      Threshold: 0.5
-      Period: 60
-      EvaluationPeriods: 5
-      MetricName: Errors
-      TreatMissingData: notBreaching
     Throttles:
       AlarmActions: crit
       Namespace: AWS/Lambda
@@ -736,6 +728,18 @@ templates:
       EvaluationPeriods: 5
       MetricName: Duration
       TreatMissingData: notBreaching
+  LambdaFunctionErrors:
+    Errors:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: Errors
+      TreatMissingData: notBreaching
   CloudFrontDistribution:
     4xxErrorRate:
       AlarmActions: warn
@@ -746,7 +750,7 @@ templates:
       Threshold: 5
       EvaluationPeriods: 2
       MetricName: 4xxErrorRate
-      TreatMissingData: Breaching
+      TreatMissingData: breaching
     5xxErrorRate:
       AlarmActions: warn
       Namespace: AWS/CloudFront
@@ -756,7 +760,7 @@ templates:
       Threshold: 5
       EvaluationPeriods: 2
       MetricName: 5xxErrorRate
-      TreatMissingData: Breaching
+      TreatMissingData: breaching
     TotalErrorRate:
       AlarmActions: warn
       Namespace: AWS/CloudFront
@@ -766,4 +770,4 @@ templates:
       Threshold: 5
       EvaluationPeriods: 5
       MetricName: TotalErrorRate
-      TreatMissingData: Breaching
+      TreatMissingData: breaching
