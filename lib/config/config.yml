@@ -13,3 +13,6 @@ resource_defaults:
   AWS::DynamoDB::Table: DynamoDBTable
   AWS::ApiGateway::RestApi: ApiGateway
   AWS::AmazonMQ::Broker: AmazonMQBroker
+  AWS::Lambda::Function: LambdaFunction
+  AWS::SQS::Queue: SQSQueue
+  AWS::CloudFront::Distribution: CloudFrontDistribution

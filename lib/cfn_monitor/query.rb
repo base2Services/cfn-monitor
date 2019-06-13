@@ -116,11 +116,19 @@ module CfnMonitor
             end
             stackResources[:template]["#{location[1..-1]}.#{resource['logical_resource_id']}/#{tg['target_groups'][0]['load_balancer_arns'][0]}"] = config['resource_defaults'][resource['resource_type']]
           else
-            stackResources[:template]["#{location[1..-1]}.#{resource['logical_resource_id']}"] = config['resource_defaults'][resource['resource_type']]
+            if location[1..-1].nil?
+                stackResources[:template]["#{stack}::#{resource['logical_resource_id']}"] = config['resource_defaults'][resource['resource_type']]
+            else
+                stackResources[:template]["#{location[1..-1]}.#{resource['logical_resource_id']}"] = config['resource_defaults'][resource['resource_type']]
+            end
           end
           stackResourceCount += 1
           stackResourceCountLocal += 1
-          print "#{location[1..-1]}: Found #{stackResourceCount} resource#{"s" if stackResourceCount != 1}\r"
+          if location[1..-1].nil?
+            print "#{stack}: Found #{stackResourceCount} resource#{"s" if stackResourceCount != 1}\r"
+           else
+            print "#{location[1..-1]}: Found #{stackResourceCount} resource#{"s" if stackResourceCount != 1}\r"
+           end
           sleep 0.2
         elsif resource['resource_type'] == 'AWS::ElasticLoadBalancingV2::LoadBalancer'
           stackResources[:physical_resource_id][resource['physical_resource_id']] = "#{location[1..-1]}.#{resource['logical_resource_id']}"
