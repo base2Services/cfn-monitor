@@ -130,6 +130,11 @@ CloudFormation do
         # Prepare conditions based on physical resource ID values
         conditions << FnNot(FnEquals(Ref("GetPhysicalId#{resourceHash}"),'null'))
         dimensions << { Name: dimensionsNames[index], Value: dimensionValue }
+        if params.key?('SecondaryDimensions')
+            params['SecondaryDimensions'].each do |secondaryDimension|
+                dimensions << secondaryDimension
+            end
+        end
       end
       params['Dimensions'] = dimensions
     end
