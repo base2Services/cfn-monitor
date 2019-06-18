@@ -760,6 +760,7 @@ templates:
       Namespace: AWS/CloudFront
       ComparisonOperator: GreaterThanThreshold
       DimensionsName: DistributionId
+      SecondaryDimensions: [ { Name: 'Region', Value: 'Global' }]
       Statistic: Sum
       Threshold: 5
       EvaluationPeriods: 2
@@ -769,6 +770,7 @@ templates:
       AlarmActions: warn
       Namespace: AWS/CloudFront
       ComparisonOperator: GreaterThanThreshold
+      SecondaryDimensions: [ { Name: 'Region', Value: 'Global' }]
       DimensionsName: DistributionId
       Statistic: Average
       Threshold: 5
@@ -779,6 +781,7 @@ templates:
       AlarmActions: warn
       Namespace: AWS/CloudFront
       ComparisonOperator: GreaterThanThreshold
+      SecondaryDimensions: [ { Name: 'Region', Value: 'Global' }]
       DimensionsName: DistributionId
       Statistic: Average
       Threshold: 5
