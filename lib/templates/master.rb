@@ -164,7 +164,7 @@ CloudFormation do
     Property('Handler', 'handler.main')
     Property('MemorySize', 128)
     Property('Runtime', 'python3.6')
-    Property('Timeout', 300)
+    Property('Timeout', 120)
     Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
 
@@ -181,7 +181,7 @@ CloudFormation do
     Property('Handler', 'main')
     Property('MemorySize', 128)
     Property('Runtime', 'go1.x')
-    Property('Timeout', 300)
+    Property('Timeout', 30)
     Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
 
@@ -198,7 +198,7 @@ CloudFormation do
     Property('Handler', 'main')
     Property('MemorySize', 128)
     Property('Runtime', 'go1.x')
-    Property('Timeout', 300)
+    Property('Timeout', 30)
     Property('Role', FnGetAtt('LambdaExecutionRole','Arn'))
   end
 
@@ -215,7 +215,7 @@ CloudFormation do
     Property('Handler', 'handler.run_check')
     Property('MemorySize', 128)
     Property('Runtime', 'python3.6')
-    Property('Timeout', 300)
+    Property('Timeout', 30)
     Property('Role', FnGetAtt('EcsCICheckLambdaExecutionRole','Arn'))
   end
 
@@ -293,6 +293,21 @@ CloudFormation do
       Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/dns.json")
       Property('TimeoutInMinutes', 5)
       Property('Parameters', dnsParams)
+    end
+  end
+
+  sqlParams = {
+    MonitoredStack: Ref('MonitoredStack'),
+    EnvironmentName: FnGetAtt('GetEnvironmentName', 'EnvironmentName' )
+  }
+
+  sql ||= {}
+  if !sql.empty?
+    Resource("SqlStack") do
+      Type 'AWS::CloudFormation::Stack'
+      Property('TemplateURL', "https://#{source_bucket}.s3.amazonaws.com/#{upload_path}/sql.json")
+      Property('TimeoutInMinutes', 5)
+      Property('Parameters', sqlParams)
     end
   end
 

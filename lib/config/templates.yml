@@ -101,6 +101,20 @@ templates:
       EvaluationPeriods: 1
       MetricName: ExpiresInDays
       AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
+  Sql:
+    Crit:
+      # An SQL check is highly customisable; this config should be overriden by
+      # a custom template.
+      AlarmActions: crit
+      Namespace: SQL
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'Host', Value: '' } ]
+      Statistic: Maximum
+      Threshold: 1
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: Your_Metric_Name
+      AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
   Dns:
     Crit:
       AlarmActions: crit
