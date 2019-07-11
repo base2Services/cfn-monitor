@@ -85,21 +85,35 @@ templates:
       ComparisonOperator: LessThanThreshold
       Dimensions: [ { Name: 'URL', Value: '${resource}' } ]
       Statistic: Maximum
+      Threshold: 5   # 5 days
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: ExpiresInDays
+      AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
+    Task:
+      AlarmActions: task
+      Namespace: SSL
+      ComparisonOperator: LessThanThreshold
+      Dimensions: [ { Name: 'URL', Value: '${resource}' } ]
+      Statistic: Maximum
       Threshold: 30   # 30 days
       Period: 60
       EvaluationPeriods: 1
       MetricName: ExpiresInDays
       AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
-    Warn:
-      AlarmActions: warn
-      Namespace: SSL
-      ComparisonOperator: LessThanThreshold
-      Dimensions: [ { Name: 'URL', Value: '${resource}' } ]
+  Sql:
+    Crit:
+      # An SQL check is highly customisable; this config should be overriden by
+      # a custom template.
+      AlarmActions: crit
+      Namespace: SQL
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'Host', Value: '' } ]
       Statistic: Maximum
-      Threshold: 60   # 60 days
+      Threshold: 1
       Period: 60
       EvaluationPeriods: 1
-      MetricName: ExpiresInDays
+      MetricName: Your_Metric_Name
       AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
   Dns:
     Crit:
@@ -108,18 +122,18 @@ templates:
       ComparisonOperator: LessThanThreshold
       Dimensions: [ { Name: 'Domain', Value: '${resource}' } ]
       Statistic: Maximum
-      Threshold: 30   # 30 days
+      Threshold: 5 # 5 days
       Period: 60
       EvaluationPeriods: 1
       MetricName: ExpiresInDays
       AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
-    Warn:
-      AlarmActions: warn
+    Task:
+      AlarmActions: task
       Namespace: DNS
       ComparisonOperator: LessThanThreshold
       Dimensions: [ { Name: 'Domain', Value: '${resource}' } ]
       Statistic: Maximum
-      Threshold: 60   # 60 days
+      Threshold: 30   # 30 days
       Period: 60
       EvaluationPeriods: 1
       MetricName: ExpiresInDays
@@ -613,6 +627,74 @@ templates:
       Period: 60
       EvaluationPeriods: 1
       MetricName: DiskSpaceUsedPercent
+      TreatMissingData: breaching
+
+  DiskINodeCheck:
+    CritLowINodeCountAtRootPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvda1' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 471859   # 90% full, based off 524288 inodes (a 7.8GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    WarnLowINodeCountAtRootPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvda1' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 419430   # 80% full, based off 524288 inodes (a 7.8GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    CritLowINodeCountAtDataPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/data' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdf' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 23592960   # 90% full, based off 26214400 inodes (a 394GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    WarnLowINodeCountAtDataPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/data' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdf' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 20971520   # 80% full, based off 26214400 inodes (a 394GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    CritLowINodeCountAtDockerPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/var/lib/docker' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdcz' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 20643840   # 90% full, based off 22937600 inodes (a 345GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    WarnLowINodeCountAtDockerPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/var/lib/docker' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdcz' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 18350080   # 80% full, based off 22937600 inodes (a 345GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
       TreatMissingData: breaching
 
   AmazonMQBroker: # AWS::AmazonMQ::Broker
