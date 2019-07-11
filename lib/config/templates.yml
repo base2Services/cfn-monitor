@@ -498,7 +498,7 @@ templates:
       #DimensionsName: ApiName
       Dimensions: [ { Name: 'ApiName', Value: '${name}' }]
       Statistic: Average
-      Threshold: 5
+      Threshold: 1000
       EvaluationPeriods: 2
   DynamoDBTable: #AWS::DynamoDB::Table
     DynamoDBReadUsage:
@@ -833,7 +833,7 @@ templates:
       Threshold: 5
       EvaluationPeriods: 2
       MetricName: 4xxErrorRate
-      TreatMissingData: breaching
+      TreatMissingData: nonBreaching
     5xxErrorRate:
       AlarmActions: warn
       Namespace: AWS/CloudFront
@@ -844,7 +844,7 @@ templates:
       Threshold: 5
       EvaluationPeriods: 2
       MetricName: 5xxErrorRate
-      TreatMissingData: breaching
+      TreatMissingData: nonBreaching
     TotalErrorRate:
       AlarmActions: warn
       Namespace: AWS/CloudFront
@@ -855,4 +855,4 @@ templates:
       Threshold: 5
       EvaluationPeriods: 5
       MetricName: TotalErrorRate
-      TreatMissingData: breaching
+      TreatMissingData: nonBreaching
