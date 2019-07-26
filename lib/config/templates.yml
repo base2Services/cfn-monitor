@@ -629,6 +629,19 @@ templates:
       MetricName: DiskSpaceUsedPercent
       TreatMissingData: breaching
 
+  Memory: # Pushed by the CloudWatch agent
+    HighMemoryUsage:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'host', Value: "${metric}" } ]
+      Statistic: Maximum
+      Threshold: 90   # Percentage used
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: MemoryUsedPercent
+      TreatMissingData: breaching
+
   AmazonMQBroker: # AWS::AmazonMQ::Broker
     CpuCreditBalanceCrit:
       AlarmActions: crit
