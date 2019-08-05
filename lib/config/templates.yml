@@ -498,7 +498,7 @@ templates:
       #DimensionsName: ApiName
       Dimensions: [ { Name: 'ApiName', Value: '${name}' }]
       Statistic: Average
-      Threshold: 5
+      Threshold: 1000
       EvaluationPeriods: 2
   DynamoDBTable: #AWS::DynamoDB::Table
     DynamoDBReadUsage:
