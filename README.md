@@ -13,6 +13,10 @@ It is packaged as a docker container `base2/cfn-monitor` and
 can be run by volume mounting in a local directory to access the config
 or by using within AWS CodePipeline.
 
+## Install Gem
+
+`gem install cfn_monitor`
+
 ## Commands
 
 ```bash

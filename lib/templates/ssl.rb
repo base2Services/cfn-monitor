@@ -1,7 +1,7 @@
 require 'cfndsl'
 
 CloudFormation do
-  Description("CloudWatch Endpoints")
+  Description("CloudWatch SQL Queries")
 
   Parameter("MonitoredStack"){
     Type 'String'

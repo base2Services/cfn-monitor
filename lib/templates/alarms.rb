@@ -126,9 +126,15 @@ CloudFormation do
         dimensionValue = FnSelect('1',FnSplit('loadbalancer/',Ref("GetPhysicalId#{resourceHash}"))) if dimensionsNames[index] == 'LoadBalancer'
         dimensionValue = FnSelect('1',FnSplit('service/',Ref("GetPhysicalId#{resourceHash}"))) if dimensionsNames[index] == 'ServiceName'
         dimensionValue = FnJoin('', [Ref("GetPhysicalId#{resourceHash}"),'-001']) if dimensionsNames[index] == 'CacheClusterId'
+        dimensionValue = FnSelect('4',FnSplit('/',Ref("GetPhysicalId#{resourceHash}"))) if dimensionsNames[index] == 'QueueName'
         # Prepare conditions based on physical resource ID values
         conditions << FnNot(FnEquals(Ref("GetPhysicalId#{resourceHash}"),'null'))
         dimensions << { Name: dimensionsNames[index], Value: dimensionValue }
+        if params.key?('SecondaryDimensions')
+            params['SecondaryDimensions'].each do |secondaryDimension|
+                dimensions << secondaryDimension
+            end
+        end
       end
       params['Dimensions'] = dimensions
     end

@@ -85,21 +85,35 @@ templates:
       ComparisonOperator: LessThanThreshold
       Dimensions: [ { Name: 'URL', Value: '${resource}' } ]
       Statistic: Maximum
+      Threshold: 5   # 5 days
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: ExpiresInDays
+      AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
+    Task:
+      AlarmActions: task
+      Namespace: SSL
+      ComparisonOperator: LessThanThreshold
+      Dimensions: [ { Name: 'URL', Value: '${resource}' } ]
+      Statistic: Maximum
       Threshold: 30   # 30 days
       Period: 60
       EvaluationPeriods: 1
       MetricName: ExpiresInDays
       AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
-    Warn:
-      AlarmActions: warn
-      Namespace: SSL
-      ComparisonOperator: LessThanThreshold
-      Dimensions: [ { Name: 'URL', Value: '${resource}' } ]
+  Sql:
+    Crit:
+      # An SQL check is highly customisable; this config should be overriden by
+      # a custom template.
+      AlarmActions: crit
+      Namespace: SQL
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'Host', Value: '' } ]
       Statistic: Maximum
-      Threshold: 60   # 60 days
+      Threshold: 1
       Period: 60
       EvaluationPeriods: 1
-      MetricName: ExpiresInDays
+      MetricName: Your_Metric_Name
       AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
   Dns:
     Crit:
@@ -108,18 +122,18 @@ templates:
       ComparisonOperator: LessThanThreshold
       Dimensions: [ { Name: 'Domain', Value: '${resource}' } ]
       Statistic: Maximum
-      Threshold: 30   # 30 days
+      Threshold: 5 # 5 days
       Period: 60
       EvaluationPeriods: 1
       MetricName: ExpiresInDays
       AlarmDescription: { 'Fn::Join': [ ' ', [ '${resource}', '${templateName}' ] ] }
-    Warn:
-      AlarmActions: warn
+    Task:
+      AlarmActions: task
       Namespace: DNS
       ComparisonOperator: LessThanThreshold
       Dimensions: [ { Name: 'Domain', Value: '${resource}' } ]
       Statistic: Maximum
-      Threshold: 60   # 60 days
+      Threshold: 30   # 30 days
       Period: 60
       EvaluationPeriods: 1
       MetricName: ExpiresInDays
@@ -461,9 +475,30 @@ templates:
       Namespace: AWS/ApiGateway
       MetricName: 5XXError
       ComparisonOperator: GreaterThanThreshold
-      DimensionsName: ApiName
+      #DimensionsName: ApiName
+      Dimensions: [ { Name: 'ApiName', Value: '${name}' }]
       Statistic: Sum
       Threshold: 5
+      EvaluationPeriods: 2
+    ApiEndpoint4xx:
+      AlarmActions: warn
+      Namespace: AWS/ApiGateway
+      MetricName: 4XXError
+      ComparisonOperator: GreaterThanThreshold
+      #DimensionsName: ApiName
+      Dimensions: [ { Name: 'ApiName', Value: '${name}' }]
+      Statistic: Sum
+      Threshold: 5
+      EvaluationPeriods: 2
+    Latency:
+      AlarmActions: warn
+      Namespace: AWS/ApiGateway
+      MetricName: Latency
+      ComparisonOperator: GreaterThanThreshold
+      #DimensionsName: ApiName
+      Dimensions: [ { Name: 'ApiName', Value: '${name}' }]
+      Statistic: Average
+      Threshold: 1000
       EvaluationPeriods: 2
   DynamoDBTable: #AWS::DynamoDB::Table
     DynamoDBReadUsage:
@@ -594,6 +629,86 @@ templates:
       MetricName: DiskSpaceUsedPercent
       TreatMissingData: breaching
 
+  DiskINodeCheck:
+    CritLowINodeCountAtRootPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvda1' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 471859   # 90% full, based off 524288 inodes (a 7.8GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    WarnLowINodeCountAtRootPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvda1' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 419430   # 80% full, based off 524288 inodes (a 7.8GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    CritLowINodeCountAtDataPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/data' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdf' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 23592960   # 90% full, based off 26214400 inodes (a 394GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    WarnLowINodeCountAtDataPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/data' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdf' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 20971520   # 80% full, based off 26214400 inodes (a 394GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    CritLowINodeCountAtDockerPath:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/var/lib/docker' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdcz' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 20643840   # 90% full, based off 22937600 inodes (a 345GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+      TreatMissingData: breaching
+    WarnLowINodeCountAtDockerPath:
+      AlarmActions: warn
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'path', Value: '/var/lib/docker' }, { Name: 'host', Value: "${metric}" }, { Name: 'device', Value: 'xvdcz' }, { Name: 'fstype', Value: 'ext4' } ]
+      Statistic: Maximum
+      Threshold: 18350080   # 80% full, based off 22937600 inodes (a 345GB disk)
+      Period: 60
+      EvaluationPeriods: 1
+      MetricName: INodesUsedCount
+
+  Memory: # Pushed by the CloudWatch agent
+    HighMemoryUsage:
+      AlarmActions: crit
+      Namespace: CWAgent
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions: [ { Name: 'host', Value: "${metric}" } ]
+      Statistic: Maximum
+      Threshold: 90   # Percentage used
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: MemoryUsedPercent
+      TreatMissingData: breaching
+
   AmazonMQBroker: # AWS::AmazonMQ::Broker
     CpuCreditBalanceCrit:
       AlarmActions: crit
@@ -637,3 +752,119 @@ templates:
       Period: 60
       EvaluationPeriods: 3
       TreatMissingData: notBreaching
+  SQSQueue:
+    ApproximateAgeOfOldestMessage:
+      AlarmActions: crit
+      Namespace: AWS/SQS
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: QueueName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: ApproximateAgeOfOldestMessage
+      TreatMissingData: breaching
+    ApproximateNumberOfMessagesVisible:
+      AlarmActions: crit
+      Namespace: AWS/SQS
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: QueueName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: ApproximateNumberOfMessagesVisible
+      TreatMissingData: breaching
+  LambdaFunction: #AWS::Lambda::Function
+    Throttles:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: Throttles
+      TreatMissingData: notBreaching
+    DeadLetterErrors:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: DeadLetterErrors
+      TreatMissingData: notBreaching
+  LambdaFunctionIteratorAge:
+    IteratorAge:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 600000
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: IteratorAge
+      TreatMissingData: notBreaching
+  LambdaFunctionDuration:
+    Duration:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 30
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: Duration
+      TreatMissingData: notBreaching
+  LambdaFunctionErrors:
+    Errors:
+      AlarmActions: crit
+      Namespace: AWS/Lambda
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: FunctionName
+      Statistic: Average
+      Threshold: 0.5
+      Period: 60
+      EvaluationPeriods: 5
+      MetricName: Errors
+      TreatMissingData: notBreaching
+  CloudFrontDistribution:
+    4xxErrorRate:
+      AlarmActions: warn
+      Namespace: AWS/CloudFront
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DistributionId
+      SecondaryDimensions: [ { Name: 'Region', Value: 'Global' }]
+      Statistic: Sum
+      Threshold: 5
+      EvaluationPeriods: 2
+      MetricName: 4xxErrorRate
+      TreatMissingData: breaching
+    5xxErrorRate:
+      AlarmActions: warn
+      Namespace: AWS/CloudFront
+      ComparisonOperator: GreaterThanThreshold
+      SecondaryDimensions: [ { Name: 'Region', Value: 'Global' }]
+      DimensionsName: DistributionId
+      Statistic: Average
+      Threshold: 5
+      EvaluationPeriods: 2
+      MetricName: 5xxErrorRate
+      TreatMissingData: breaching
+    TotalErrorRate:
+      AlarmActions: warn
+      Namespace: AWS/CloudFront
+      ComparisonOperator: GreaterThanThreshold
+      SecondaryDimensions: [ { Name: 'Region', Value: 'Global' }]
+      DimensionsName: DistributionId
+      Statistic: Average
+      Threshold: 5
+      EvaluationPeriods: 5
+      MetricName: TotalErrorRate
+      TreatMissingData: breaching
