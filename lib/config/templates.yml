@@ -763,7 +763,7 @@ templates:
       Period: 60
       EvaluationPeriods: 5
       MetricName: ApproximateAgeOfOldestMessage
-      TreatMissingData: breaching
+      TreatMissingData: notBreaching
     ApproximateNumberOfMessagesVisible:
       AlarmActions: crit
       Namespace: AWS/SQS
@@ -774,7 +774,7 @@ templates:
       Period: 60
       EvaluationPeriods: 5
       MetricName: ApproximateNumberOfMessagesVisible
-      TreatMissingData: breaching
+      TreatMissingData: notBreaching
   LambdaFunction: #AWS::Lambda::Function
     Throttles:
       AlarmActions: crit
