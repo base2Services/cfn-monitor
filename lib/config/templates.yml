@@ -459,6 +459,24 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 10
+    CurrentConnectionsTask:
+      AlarmActions: task
+      Namespace: AWS/ElastiCache
+      MetricName: CurrConnections
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: CacheClusterId
+      Statistic: Maximum
+      Threshold: 50000
+      EvaluationPeriods: 10
+    CurrentConnectionsCrit:
+      AlarmActions: crit
+      Namespace: AWS/ElastiCache
+      MetricName: CurrConnections
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: CacheClusterId
+      Statistic: Maximum
+      Threshold: 60000
+      EvaluationPeriods: 10
   ElasticFileSystem: # AWS::EFS::FileSystem
     PercentIOLimitHigh:
       AlarmActions: crit
