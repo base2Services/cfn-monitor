@@ -73,7 +73,7 @@ CloudFormation do
       Resource("NrpeCheckFunction#{hostHash}") do
         Condition "Condition#{hostHash}" if alarm[:environments] != ['all']
         Type 'AWS::Lambda::Function'
-        Property('Code', { S3Bucket: FnJoin('.', ['base2.lambda', Ref('AWS::Region')]), S3Key: 'aws-lambda-nrpe-check/0.1/handler.zip' })
+        Property('Code', { S3Bucket: FnJoin('.', ['base2.lambda', Ref('AWS::Region')]), S3Key: 'aws-lambda-nrpe-check/0.2/handler.zip' })
         Property('Handler', 'main')
         Property('MemorySize', 128)
         Property('Runtime', 'go1.x')
