@@ -498,6 +498,7 @@ templates:
       Statistic: Sum
       Threshold: 5
       EvaluationPeriods: 2
+      TreatMissingData: notBreaching
     ApiEndpoint4xx:
       AlarmActions: warn
       Namespace: AWS/ApiGateway
@@ -508,6 +509,7 @@ templates:
       Statistic: Sum
       Threshold: 5
       EvaluationPeriods: 2
+      TreatMissingData: notBreaching
     Latency:
       AlarmActions: warn
       Namespace: AWS/ApiGateway
@@ -546,6 +548,7 @@ templates:
       Statistic: Sum
       Threshold: 1
       EvaluationPeriods: 2
+      TreatMissingData: notBreaching
     DynamoDBWriteThrottleEvents:
       AlarmActions: warn
       Namespace: AWS/DynamoDB
@@ -555,6 +558,7 @@ templates:
       Statistic: Sum
       Threshold: 1
       EvaluationPeriods: 2
+      TreatMissingData: notBreaching
   ElasticLoadBalancerSingleInstance: # AWS::ElasticLoadBalancing::LoadBalancer
     HealthyHosts:
       AlarmActions: crit
