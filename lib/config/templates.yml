@@ -778,8 +778,8 @@ templates:
       DimensionsName: QueueName
       Statistic: Average
       Threshold: 0.5
-      Period: 60
-      EvaluationPeriods: 5
+      Period: 300
+      EvaluationPeriods: 1
       MetricName: ApproximateAgeOfOldestMessage
       TreatMissingData: notBreaching
     ApproximateNumberOfMessagesVisible:
@@ -789,8 +789,8 @@ templates:
       DimensionsName: QueueName
       Statistic: Average
       Threshold: 0.5
-      Period: 60
-      EvaluationPeriods: 5
+      Period: 300
+      EvaluationPeriods: 1
       MetricName: ApproximateNumberOfMessagesVisible
       TreatMissingData: notBreaching
   LambdaFunction: #AWS::Lambda::Function
