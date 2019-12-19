@@ -338,6 +338,34 @@ templates:
       Statistic: Minimum
       Threshold: 75
       EvaluationPeriods: 60
+  AuroraInstance:
+    DBConnections:
+      AlarmActions: crit
+      Namespace: AWS/RDS
+      MetricName: DatabaseConnections
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DBInstanceIdentifier
+      Statistic: Minimum
+      Threshold: 750    # This needs to be customised for whichever instance type is being used as it is not a percentage and they all differ
+      EvaluationPeriods: 10
+    CPUUtilizationHighSpike:
+      AlarmActions: crit
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DBInstanceIdentifier
+      Statistic: Minimum
+      Threshold: 95
+      EvaluationPeriods: 10
+    CPUUtilizationHighBase:
+      AlarmActions: warn
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      ComparisonOperator: GreaterThanThreshold
+      DimensionsName: DBInstanceIdentifier
+      Statistic: Minimum
+      Threshold: 75
+      EvaluationPeriods: 60
   DBCluster: # AWS::RDS::DBCluster
     CPUUtilizationHighSpike:
       AlarmActions: crit
