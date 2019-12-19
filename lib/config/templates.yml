@@ -346,7 +346,7 @@ templates:
       ComparisonOperator: GreaterThanThreshold
       DimensionsName: DBInstanceIdentifier
       Statistic: Minimum
-      Threshold: 750    # This needs to be customised for whichever instance type is being used as it is not a percentage and they all differ
+      Threshold: 45    # This needs to be customised for whichever instance type is being used as it is not a percentage and they all differ
       EvaluationPeriods: 10
     CPUUtilizationHighSpike:
       AlarmActions: crit
