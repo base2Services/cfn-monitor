@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "aws-sdk-elasticloadbalancingv2", "~> 1", "<2"
 
   spec.add_development_dependency "bundler", "~> 2"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 0.9"
   spec.add_development_dependency "rspec-core", "~> 3.8"
   spec.add_development_dependency "rspec-expectations", "~> 3.8"
