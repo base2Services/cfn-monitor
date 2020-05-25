@@ -548,6 +548,7 @@ templates:
       Statistic: Average
       Threshold: 1000
       EvaluationPeriods: 2
+      TreatMissingData: notBreaching
   DynamoDBTable: #AWS::DynamoDB::Table
     DynamoDBReadUsage:
       AlarmActions: warn
