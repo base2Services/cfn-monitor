@@ -6,8 +6,9 @@ COPY . /src
 
 WORKDIR /src
 
-RUN gem build cfn_monitor.gemspec && \
-    gem install ciinabox-${CFN_MONITOR_VERSION}.gem && \
+RUN apk add --no-cache git && \
+    gem build cfn_monitor.gemspec && \
+    gem install cfn_monitor-${CFN_MONITOR_VERSION}.gem && \
     rm -rf /src
     
 RUN cfndsl -u 9.0.0
