@@ -1,7 +1,15 @@
-FROM ruby:2.5-alpine
+FROM ruby:2.7-alpine
 
-RUN gem install cfn_monitor
+ARG CFN_MONITOR_VERSION=0.4.5
+
+COPY . /src
 
 WORKDIR /src
 
-CMD ["cfn_monitor"]
+RUN gem build cfn_monitor.gemspec && \
+    gem install ciinabox-${CFN_MONITOR_VERSION}.gem && \
+    rm -rf /src
+    
+RUN cfndsl -u 9.0.0
+
+CMD cfn_monitor
